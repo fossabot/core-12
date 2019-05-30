@@ -644,8 +644,8 @@ function date_fr($date_en) {
 		);
 		$texte_short = array(
 			"Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim",
-			"Jan", "Fev", "Mar", "Avr", "Mai", "Jui",
-			"Jui", "Aou;", "Sep", "Oct", "Nov", "Dec",
+			"Janv.", "Févr.", "Mars", "Avril", "Mai", "Juin",
+			"Juil.", "Août", "Sept.", "Oct.", "Nov.", "Déc.",
 		);
 		break;
 		case 'de_DE':
@@ -940,18 +940,18 @@ function evaluate($_string) {
 	if (!isset($GLOBALS['ExpressionLanguage'])) {
 		$GLOBALS['ExpressionLanguage'] = new ExpressionLanguage();
 	}
-	$_string = str_ireplace(array(' et ', ' and ', ' ou ', ' or '), array(' && ', ' && ', ' || ', ' || '), $_string);
-	if (strpos($_string, '"') !== false || strpos($_string, '\'') !== false) {
+	$string = str_ireplace(array(' et ', ' and ', ' ou ', ' or '), array(' && ', ' && ', ' || ', ' || '), $_string);
+	if (strpos($string, '"') !== false || strpos($string, '\'') !== false) {
 		$regex = "/(?:(?:\"(?:\\\\\"|[^\"])+\")|(?:'(?:\\\'|[^'])+'))/is";
-		$r = preg_match_all($regex, $_string, $matches);
+		$r = preg_match_all($regex, $string, $matches);
 		$c = count($matches[0]);
 		for ($i = 0; $i < $c; $i++) {
-			$_string = str_replace($matches[0][$i], '--preparsed' . $i . '--', $_string);
+			$string = str_replace($matches[0][$i], '--preparsed' . $i . '--', $string);
 		}
 	} else {
 		$c = 0;
 	}
-	$expr = str_replace('==', '=', $_string);
+	$expr = str_replace('==', '=', $string);
 	$expr = str_replace('=', '==', $expr);
 	$expr = str_replace('<==', '<=', $expr);
 	$expr = str_replace('>==', '>=', $expr);
@@ -969,39 +969,7 @@ function evaluate($_string) {
 		//log::add('expression', 'debug', '[Parser 1] Expression : ' . $_string . ' tranformé en ' . $expr . ' => ' . $e->getMessage());
 	}
 	try {
-		$expr = str_replace('""', '"', $expr);
-		return $GLOBALS['ExpressionLanguage']->evaluate($expr);
-	} catch (Exception $e) {
-		//log::add('expression', 'debug', '[Parser 2] Expression : ' . $_string . ' tranformé en ' . $expr . ' => ' . $e->getMessage());
-	}
-	if ($c > 0) {
-		for ($i = 0; $i < $c; $i++) {
-			$_string = str_replace('--preparsed' . $i . '--', $matches[0][$i], $_string);
-		}
-	}
-	return $_string;
-}
-
-function evaluate_old($_string) {
-	if (!isset($GLOBALS['ExpressionLanguage'])) {
-		$GLOBALS['ExpressionLanguage'] = new ExpressionLanguage();
-	}
-	$expr = str_replace(array(' et ', ' ET ', ' AND ', ' and ', ' ou ', ' OR ', ' or ', ' OU '), array(' && ', ' && ', ' && ', ' && ', ' || ', ' || ', ' || ', ' || '), $_string);
-	$expr = str_replace('==', '=', $expr);
-	$expr = str_replace('=', '==', $expr);
-	$expr = str_replace('<==', '<=', $expr);
-	$expr = str_replace('>==', '>=', $expr);
-	$expr = str_replace('!==', '!=', $expr);
-	$expr = str_replace('!===', '!==', $expr);
-	$expr = str_replace('====', '===', $expr);
-	try {
-		return $GLOBALS['ExpressionLanguage']->evaluate($expr);
-	} catch (Exception $e) {
-		//log::add('expression', 'debug', '[Parser 1] Expression : ' . $_string . ' tranformé en ' . $expr . ' => ' . $e->getMessage());
-	}
-	try {
-		$expr = str_replace('""', '"', $expr);
-		return $GLOBALS['ExpressionLanguage']->evaluate($expr);
+		return $GLOBALS['ExpressionLanguage']->evaluate(str_replace('""', '"', $expr));
 	} catch (Exception $e) {
 		//log::add('expression', 'debug', '[Parser 2] Expression : ' . $_string . ' tranformé en ' . $expr . ' => ' . $e->getMessage());
 	}
@@ -1370,6 +1338,100 @@ function sanitizeAccent($_message) {
 	}
 	
 	function checkAndFixCron($_cron){
-		return str_replace('*/ ','* ',$_cron);
+		$return = $_cron;
+		$return = str_replace('*/ ','* ',$return);
+		preg_match_all('/([0-9]*\/\*)/m', $return, $matches, PREG_SET_ORDER, 0);
+		if(count($matches) > 0){
+			return '';
+		}
+		preg_match_all('/(\*\/0)/m', $return, $matches, PREG_SET_ORDER, 0);
+		if(count($matches) > 0){
+			return '';
+		}
+		return $return;
+	}
+	
+	function getTZoffsetMin() {
+		$tz = date_default_timezone_get();
+		date_default_timezone_set( "UTC" );
+		$seconds = timezone_offset_get( timezone_open($tz), new DateTime() );
+		date_default_timezone_set($tz);
+		return($seconds/60);
+	}
+	
+	function pageTitle($_page){
+		switch ($_page) {
+			case 'view':
+			$return = __('Vues',__FILE__);
+			break;
+			case 'plan':
+			$return = __('Designs',__FILE__);
+			break;
+			case 'plan3d':
+			$return = __('Designs 3D',__FILE__);
+			break;
+			case 'eqAnalyse':
+			$return = __('Equipements',__FILE__);
+			break;
+			case 'display':
+			$return = __('Résumé',__FILE__);
+			break;
+			case 'history':
+			$return = __('Historique',__FILE__);
+			break;
+			case 'report':
+			$return = __('Rapports',__FILE__);
+			break;
+			case 'health':
+			$return = __('Santé',__FILE__);
+			break;
+			case 'object':
+			$return = __('Objets',__FILE__);
+			break;
+			case 'scenario':
+			$return = __('Scénarios',__FILE__);
+			break;
+			case 'interact':
+			$return = __('Interactions',__FILE__);
+			break;
+			case 'widgets':
+			$return = __('Widgets',__FILE__);
+			break;
+			case 'plugin':
+			$return = __('Gestion Plugins',__FILE__);
+			break;
+			case 'administration':
+			$return = __('Configuration',__FILE__);
+			break;
+			case 'backup':
+			$return = __('Sauvegardes',__FILE__);
+			break;
+			case 'cron':
+			$return = __('Moteur de tâches',__FILE__);
+			break;
+			case 'custom':
+			$return = __('Personnalisation',__FILE__);
+			break;
+			case 'user':
+			$return = __('Utilisateurs',__FILE__);
+			break;
+			case 'profils':
+			$return = __('Préférences',__FILE__);
+			break;
+			case 'log':
+			$return = __('Logs',__FILE__);
+			break;
+			case 'update':
+			$return = __('Mises à jour',__FILE__);
+			break;
+			default:
+			$return = $_page;
+			break;
+		}
+		return ucfirst($return);
+	}
+	
+	function cleanComponanteName($_name){
+		return str_replace(array('&', '#', ']', '[', '%', "\\", "/", "'", '"'), '', $_name);
 	}
 	

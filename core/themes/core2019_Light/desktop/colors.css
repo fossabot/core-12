@@ -12,7 +12,7 @@ Theme Core 2019 @Jeedom
   --logo-secondary-color: rgb(69, 68, 73);
   --bg-color: 235, 235, 238;
   --bg-modal-color: rgb(247, 248, 248);
-  --contrast-color: rgb(30, 30, 30);
+  --contrast-color: 30, 30, 30;
   
   --txt-color: rgb(115, 115, 115);
   --link-color: rgb(90, 90, 90);
@@ -32,6 +32,8 @@ Theme Core 2019 @Jeedom
   --panel-bg-color: rgb(240, 241, 242);
   
   --eqTitle-color: rgb(240, 240, 240);
+  --objectBkgd-color: rgb(105, 105, 105);
+  --objectTxt-color: rgb(235, 235, 235);
   
   --eq-bg-color: 249, 249, 250;
   --cat-security-color: 180, 40, 40;
@@ -47,6 +49,8 @@ Theme Core 2019 @Jeedom
   --url-iconsLight: url(../img/ui-icons-black.png);
   
   --lb-info-color: rgb(110, 180, 240);
+  --lb-yellow-color: rgb(240, 215, 0);
+  --lb-yellow-color: rgb(240, 215, 0);
   --al-info-color: rgb(100, 160, 230);
   --al-primary-color:  rgb(60, 120, 180);
   --al-success-color: rgb(80, 170, 80);
@@ -54,15 +58,19 @@ Theme Core 2019 @Jeedom
   --al-danger-color: rgb(190, 0, 0);
   --bt-success-color: rgb(150, 201, 39);
   
-  --scBloc-color1: rgb(172,163,148);
-  --scBloc-color2: rgb(158,148,138);
-  --scBloc-color3: rgb(142,134,128);
-  --scBloc-color4: rgb(124,118,118);
-  --scBloc-color5: rgb(111,109,108);
-  --scBloc-color6: rgb(98, 98, 102);
-  --scBloc-color7: rgb(88, 92, 96);
-  --scBloc-color8: rgb(78, 82, 85);
-  --scBloc-color0: rgb(65, 69, 72);
+  --scBlocIF: rgb(123,123,129);
+  --scBlocACTION: rgb(180,175,170);
+  --scBlocIN: rgb(95,148,82);
+  --scBlocAT: rgb(78,106,158);
+  --scBlocFOR: rgb(172,146,42);
+  --scBlocCODE: rgb(70,82,95);
+  --scBlocCOM: rgb(100,110,108);
   
-  --shd-color: rgba(0, 0, 0, 0.5);
+  --scBlocIF-sep: rgb(75, 75, 75);
+  --scBlocACTION-sep: rgb(108,105,102);
+  --scBlocIN-sep: rgb(57, 89, 50);
+  --scBlocAT-sep: rgb(47, 64, 95);
+  --scBlocFOR-sep: rgb(103, 88, 25);
+  
+  --shd-color: rgba(0, 0, 0, 0.55);
 }

@@ -92,7 +92,6 @@ a:focus {
 .input-group-addon,
 .scenario-widget .btn-default {
   background-color: var(--btn-default-color) !important;
-  background: linear-gradient(var(--btn-default-color), var(--btn-default-color)) fixed !important;
 }
 
 .eqLogic-widget .btn,
@@ -101,7 +100,6 @@ a:focus {
 #bt_editDashboardWidgetOrder,
 #bt_displayObject {
   background-color: var(--btnEq-default-color) !important;
-  background: linear-gradient(var(--btnEq-default-color), var(--btnEq-default-color)) fixed !important;
 }
 
 /* buttons on eq widgets */
@@ -113,5 +111,5 @@ a:focus {
 .eqLogic.eqLogic-widget .btn:hover,
 .scenario.scenario-widget .btn:hover,
 #div_displayObject .btn:hover {
-  color: var(--linkHoverLight-color) !important;
+  color: var(--txt-color) !important;
 }

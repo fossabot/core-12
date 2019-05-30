@@ -14,6 +14,30 @@
 * You should have received a copy of the GNU General Public License
 * along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
 */
+
+$('#sel_widgetType').off('change').on('change',function(){
+  $('#sel_widgetSubtype option').hide();
+  if($(this).value() != ''){
+    $('#sel_widgetSubtype option[data-type='+$(this).value()+']').show();
+  }
+  $('#sel_widgetSubtype option[data-default=1]').show();
+  $('#sel_widgetSubtype').value('');
+});
+
+$("#md_widgetCreate").dialog({
+  closeText: '',
+  autoOpen: false,
+  modal: true,
+  height: 260,
+  width: 300,
+  open: function () {
+    $("body").css({overflow: 'hidden'});
+  },
+  beforeClose: function (event, ui) {
+    $("body").css({overflow: 'inherit'});
+  }
+});
+
 fileEditor = null
 var CURRENT_FOLDER=rootPath
 printFileFolder(CURRENT_FOLDER);
@@ -91,7 +115,8 @@ function getEditorMode(_path){
 
 function displayFile(_path){
   $.hideAlert();
-  $('#span_editorFileName').empty().html(_path);
+  $('#span_editorFileName').empty().html(_path.replace(/^.*[\\\/]/, ''));
+  $('#span_editorFileName').attr('title',_path);
   $('#bt_saveFile').attr('data-path',_path);
   $('#bt_deleteFile').attr('data-path',_path);
   jeedom.getFileContent({
@@ -123,6 +148,10 @@ function displayFile(_path){
 }
 
 $('#bt_saveFile').on('click',function(){
+  if (!fileEditor){
+    $('#div_alert').showAlert({message: '{{Aucun fichier ouvert.}}', level: 'warning'});
+    return
+  }
   jeedom.setFileContent({
     path : $(this).attr('data-path'),
     content :fileEditor.getValue(),
@@ -136,8 +165,13 @@ $('#bt_saveFile').on('click',function(){
 })
 
 $('#bt_deleteFile').on('click',function(){
-  var path=$(this).attr('data-path');
-  bootbox.confirm('{{Etes-vous sûr de vouloir supprimer ce fichier : }} <span style="font-weight: bold ;">' +path + '</span> ?', function (result) {
+  if (!fileEditor){
+    $('#div_alert').showAlert({message: '{{Aucun fichier ouvert.}}', level: 'warning'});
+    return
+  }
+  $('#span_editorFileName').empty();
+  var path = $(this).attr('data-path');
+  bootbox.confirm('{{Êtes-vous sûr de vouloir supprimer ce fichier : }} <span style="font-weight: bold ;">' +path + '</span> ?', function (result) {
     if (result) {
       jeedom.deleteFile({
         path : path,
@@ -145,7 +179,7 @@ $('#bt_deleteFile').on('click',function(){
           $('#div_alert').showAlert({message: error.message, level: 'danger'});
         },
         success : function(data){
-          $('#div_alert').showAlert({message: '{{Fichier enregistré avec succès}}', level: 'success'});
+          $('#div_alert').showAlert({message: '{{Fichier supprimé avec succès}}', level: 'success'});
           if (fileEditor != null) {
             fileEditor.getDoc().setValue('');
             setTimeout(function () {
@@ -170,21 +204,53 @@ $('#bt_deleteFile').on('click',function(){
   });
 })
 
-$('#bt_createFile').on('click',function(){
-  bootbox.prompt("Nom du fichier ?", function (result) {
-    if (result !== null) {
-      jeedom.createFile({
-        path : CURRENT_FOLDER,
-        name :result,
-        error: function (error) {
-          $('#div_alert').showAlert({message: error.message, level: 'danger'});
-        },
-        success : function(data){
-          $('#div_alert').showAlert({message: '{{Fichier enregistré avec succès}}', level: 'success'});
-          printFileFolder(CURRENT_FOLDER);
-          displayFile(CURRENT_FOLDER+'/'+result);
-        }
-      });
+$('#bt_widgetCreate').off('click').on('click',function(){
+  CURRENT_FOLDER = rootPath+$('#sel_widgetVersion').value()+'/';
+  if($('#sel_widgetSubtype').value() == ''){
+    $('#div_alert').showAlert({message: '{{Le sous-type ne peut être vide}}', level: 'danger'});
+    return;
+  }
+  if($('#in_widgetName').value() == ''){
+    $('#div_alert').showAlert({message: '{{Le nom ne peut être vide}}', level: 'danger'});
+    return;
+  }
+  var name = 'cmd.'+$('#sel_widgetType').value()+'.'+$('#sel_widgetSubtype').value()+'.'+$('#in_widgetName').value()+'.html';
+  jeedom.createFile({
+    path : CURRENT_FOLDER,
+    name :name,
+    error: function (error) {
+      $('#div_alert').showAlert({message: error.message, level: 'danger'});
+    },
+    success : function(data){
+      $("#md_widgetCreate").dialog('close');
+      $('#div_alert').showAlert({message: '{{Fichier enregistré avec succès}}', level: 'success'});
+      printFileFolder(CURRENT_FOLDER);
+      displayFile(CURRENT_FOLDER+'/'+name);
     }
   });
+});
+
+$('#bt_createFile').off('click').on('click',function(){
+  if(editorType == 'widget'){
+    $('#md_widgetCreate').dialog({title: "{{Options}}"});
+    $("#md_widgetCreate").dialog('open');
+    $('#sel_widgetType').trigger('change');
+  }else{
+    bootbox.prompt("Nom du fichier ?", function (result) {
+      if (result !== null) {
+        jeedom.createFile({
+          path : CURRENT_FOLDER,
+          name :result,
+          error: function (error) {
+            $('#div_alert').showAlert({message: error.message, level: 'danger'});
+          },
+          success : function(data){
+            $('#div_alert').showAlert({message: '{{Fichier enregistré avec succès}}', level: 'success'});
+            printFileFolder(CURRENT_FOLDER);
+            displayFile(CURRENT_FOLDER+'/'+result);
+          }
+        });
+      }
+    });
+  }
 })

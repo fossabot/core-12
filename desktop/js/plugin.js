@@ -14,6 +14,7 @@
 * along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
 */
 
+//searching
 $('#in_searchPlugin').off('keyup').keyup(function () {
   var search = $(this).value();
   if(search == ''){
@@ -22,7 +23,7 @@ $('#in_searchPlugin').off('keyup').keyup(function () {
     return;
   }
   search = search.normalize('NFD').replace(/[\u0300-\u036f]/g, "")
-
+  
   $('.pluginDisplayCard').hide();
   $('.pluginDisplayCard .name').each(function(){
     var text = $(this).text().toLowerCase();
@@ -34,6 +35,11 @@ $('#in_searchPlugin').off('keyup').keyup(function () {
   });
   $('.pluginListContainer').packery();
 });
+
+$('#bt_resetPluginSearch').on('click', function () {
+  $('#in_searchPlugin').val('')
+  $('#in_searchPlugin').keyup();
+})
 
 if($('#md_modal').is(':visible')){
   $('#bt_returnToThumbnailDisplay').hide();
@@ -80,13 +86,13 @@ $(".li_plugin,.pluginDisplayCard").on('click', function () {
         $('#span_plugin_installation').closest('.panel').show();
         $('#span_plugin_installation').html(data.installation);
       }
-
+      
       if(isset(data.update) && isset(data.update.configuration) && isset(data.update.configuration.version)){
         $('#span_plugin_install_version').html(data.update.configuration.version);
       }else{
         $('#span_plugin_install_version').html('');
       }
-
+      
       $('#div_plugin_dependancy').closest('.panel').parent().addClass('col-md-6')
       $('#div_plugin_deamon').closest('.panel').parent().addClass('col-md-6')
       if(data.hasDependency == 0 || data.activate != 1){
@@ -97,7 +103,7 @@ $(".li_plugin,.pluginDisplayCard").on('click', function () {
         $('#div_plugin_dependancy').closest('.panel')
         $("#div_plugin_dependancy").load('index.php?v=d&modal=plugin.dependancy&plugin_id='+data.id);
       }
-
+      
       if(data.hasOwnDeamon == 0 || data.activate != 1){
         $('#div_plugin_deamon').closest('.panel').hide();
         $('#div_plugin_dependancy').closest('.panel').parent().removeClass('col-md-6')
@@ -106,7 +112,7 @@ $(".li_plugin,.pluginDisplayCard").on('click', function () {
         $("#div_plugin_deamon").load('index.php?v=d&modal=plugin.deamon&plugin_id='+data.id);
       }
       $('#span_right_button').empty();
-      $('#span_right_button').append('<a class="btn btn-sm roundedLeft bt_refreshPluginInfo"><i class="fas fa-refresh"></i> {{Rafraichir}}</a>');
+      $('#span_right_button').append('<a class="btn btn-sm roundedLeft bt_refreshPluginInfo"><i class="fas fa-sync"></i> {{Rafraichir}}</a>');
       if (isset(data.status) && isset(data.status.owner)) {
         for(var i in data.status.owner){
           if(data.status.owner[i] != 1){
@@ -130,7 +136,7 @@ $(".li_plugin,.pluginDisplayCard").on('click', function () {
       } else {
         $('#span_plugin_require').html('<span class="label label-danger">' + data.require + '</span>');
       }
-
+      
       $('#div_configPanel').hide();
       $('#div_plugin_panel').empty();
       if(isset(data.display) && data.display != ''){
@@ -143,7 +149,7 @@ $(".li_plugin,.pluginDisplayCard").on('click', function () {
         config_panel_html += '</div>';
         $('#div_plugin_panel').append(config_panel_html);
       }
-
+      
       if(isset(data.mobile) && data.mobile != ''){
         $('#div_configPanel').show();
         var config_panel_html = '<div class="form-group">';
@@ -154,7 +160,7 @@ $(".li_plugin,.pluginDisplayCard").on('click', function () {
         config_panel_html += '</div>';
         $('#div_plugin_panel').append(config_panel_html);
       }
-
+      
       $('#div_plugin_functionality').empty();
       count = 0;
       var config_panel_html = '<div class="row">';
@@ -162,19 +168,19 @@ $(".li_plugin,.pluginDisplayCard").on('click', function () {
       for(var i in data.functionality){
         config_panel_html += '<div class="form-group">';
         config_panel_html += '<label class="col-lg-3 col-md-4 col-sm-4 col-xs-6 control-label">'+i+'</label>';
-        config_panel_html += '<div class="col-lg-2 col-md-2 col-sm-3 col-xs-6">';
+        config_panel_html += '<label class="col-lg-2 col-md-2 col-sm-3 col-xs-6">';
         if(data.functionality[i].exists){
           config_panel_html += '<span class="label label-success">{{Oui}}</span>';
-          config_panel_html += '</div>';
+          config_panel_html += '</label>';
           if(data.functionality[i].controlable){
             config_panel_html += '<label class="col-lg-3 col-md-3 col-sm-3 col-xs-6 control-label">{{Activer}}</label>';
-            config_panel_html += '<div class="col-lg-2 col-md-2 col-sm-2 col-xs-6">';
+            config_panel_html += '<label class="col-lg-2 col-md-2 col-sm-2 col-xs-6">';
             config_panel_html += '<input type="checkbox" class="configKey tooltips" data-l1key="functionality::'+i+'::enable" checked/>';
-            config_panel_html += '</div>';
+            config_panel_html += '</label>';
           }
         }else{
           config_panel_html += '<span class="label label-danger">{{Non}}</span>';
-          config_panel_html += '</div>';
+          config_panel_html += '</label>';
         }
         config_panel_html += '</div>';
         count++;
@@ -186,7 +192,7 @@ $(".li_plugin,.pluginDisplayCard").on('click', function () {
       config_panel_html += '</div>';
       config_panel_html += '</div>';
       $('#div_plugin_functionality').append(config_panel_html);
-
+      
       $('#div_plugin_toggleState').empty();
       if (data.checkVersion != -1) {
         var html = '<form class="form-horizontal"><fieldset>';
@@ -240,7 +246,7 @@ $(".li_plugin,.pluginDisplayCard").on('click', function () {
         log_conf += '</div>';
         log_conf += '</form>';
       }
-
+      
       log_conf += '<form class="form-horizontal">';
       log_conf += '<div class="form-group">';
       log_conf += '<label class="col-sm-3 control-label">{{Heartbeat (min)}}</label>';
@@ -248,14 +254,14 @@ $(".li_plugin,.pluginDisplayCard").on('click', function () {
       log_conf += '<input class="configKey form-control" data-l1key="heartbeat::delay::' + data.id + '" />';
       log_conf += '</div>';
       if(data.hasOwnDeamon){
-        log_conf += '<label class="col-sm-3 control-label">{{Redemarrer démon}}</label>';
+        log_conf += '<label class="col-sm-3 control-label">{{Redémarrer démon}}</label>';
         log_conf += '<div class="col-sm-2">';
         log_conf += '<input type="checkbox" class="configKey" data-l1key="heartbeat::restartDeamon::' + data.id + '" />';
         log_conf += '</div>';
       }
       log_conf += '</div>';
       log_conf += '</form>';
-
+      
       $('#div_plugin_log').empty().append(log_conf);
       $('#div_plugin_configuration').empty();
       if (data.checkVersion != -1) {
@@ -320,6 +326,7 @@ $(".li_plugin,.pluginDisplayCard").on('click', function () {
       }
       $('#div_confPlugin').show();
       modifyWithoutSave = false;
+      addOrUpdateUrl('id',$('#span_plugin_id').text(), data.name + ' - ' + JEEDOM_PRODUCT_NAME);
     }
   });
   return false;
@@ -327,7 +334,7 @@ $(".li_plugin,.pluginDisplayCard").on('click', function () {
 
 $('#span_right_button').delegate('.removePlugin','click',function(){
   var _el = $(this);
-  bootbox.confirm('{{Etes-vous sûr de vouloir supprimer ce plugin ?}}', function (result) {
+  bootbox.confirm('{{Êtes-vous sûr de vouloir supprimer ce plugin ?}}', function (result) {
     if (result) {
       $.hideAlert();
       jeedom.update.remove({
@@ -365,14 +372,25 @@ if (sel_plugin_id != -1) {
   if ($('.pluginDisplayCard[data-plugin_id=' + sel_plugin_id + ']').length != 0) {
     $('.pluginDisplayCard[data-plugin_id=' + sel_plugin_id + ']').click();
   } else {
-    $('.pluginDisplayCard:first').click();
+    $('.pluginDisplayCard').first().click();
   }
 }
 
 $('#bt_returnToThumbnailDisplay').on('click',function(){
+  setTimeout(function(){
+    $('.nav li.active').removeClass('active');
+    $('a[href="#'+$('.tab-pane.active').attr('id')+'"]').closest('li').addClass('active')
+  },500);
+  if (modifyWithoutSave) {
+    if (!confirm('{{Attention vous quittez une page ayant des données modifiées non sauvegardées. Voulez-vous continuer ?}}')) {
+      return;
+    }
+    modifyWithoutSave = false;
+  }
   $('#div_resumePluginList').show();
   $('#div_confPlugin').hide();
   $('.pluginListContainer').packery();
+  addOrUpdateUrl('id',null,'{{Gestion Plugins}} - '+JEEDOM_PRODUCT_NAME);
 });
 
 jwerty.key('ctrl+s/⌘+s', function (e) {
@@ -395,7 +413,7 @@ $('#div_pageContainer').delegate('.sendPluginTo', 'click', function () {
   $('#md_modal2').load('index.php?v=d&modal=update.send&type=plugin&logicalId=' + $(this).attr('data-logicalId')+'&repo='+$(this).attr('data-repo')).dialog('open');
 });
 
-$('#div_pageContainer').delegate('.configKey', 'change', function () {
+$('#div_pageContainer').off( 'change', '.configKey').on( 'change','.configKey:visible',function () {
   modifyWithoutSave = true;
 });
 

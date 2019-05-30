@@ -18,6 +18,7 @@ $('.backgroundforJeedom').css('background-position','bottom right');
 $('.backgroundforJeedom').css('background-repeat','no-repeat');
 $('.backgroundforJeedom').css('background-size','auto');
 
+//searching
 $('#in_searchInteract').keyup(function () {
   var search = $(this).value();
   if(search == ''){
@@ -30,30 +31,50 @@ $('#in_searchInteract').keyup(function () {
 
   $('.panel-collapse:not(.in)').closest('.panel').find('.accordion-toggle').click()
   $('.interactDisplayCard').hide();
+  $('.panel-collapse').attr('data-show',0);
   $('.interactDisplayCard .name').each(function(){
     var text = $(this).text().toLowerCase();
     text = text.normalize('NFD').replace(/[\u0300-\u036f]/g, "")
     if(text.indexOf(search.toLowerCase()) >= 0){
       $(this).closest('.interactDisplayCard').show();
+      $(this).closest('.panel-collapse').attr('data-show',1);
     }
   });
+  $('.panel-collapse[data-show=1]').collapse('show');
+  $('.panel-collapse[data-show=0]').collapse('hide');
   $('.interactListContainer').packery();
 });
 
-$('#bt_openAll').on('click', function () {
+$('#bt_resetInteractSearch').on('click', function () {
+  $('#in_searchInteract').val('')
+  $('#in_searchInteract').keyup();
+})
+
+$('#bt_openAll').off('click').on('click', function () {
   $(".accordion-toggle[aria-expanded='false']").each(function(){
     $(this).click()
   })
 });
-$('#bt_closeAll').on('click', function () {
+$('#bt_closeAll').off('click').on('click', function () {
   $(".accordion-toggle[aria-expanded='true']").each(function(){
     $(this).click()
   })
 });
 
-$('.nav-tabs a').on('shown.bs.tab', function (e) {
-  window.location.hash = e.target.hash;
-})
+$('#bt_chooseIcon').on('click', function () {
+  var _icon = false
+  if ( $('div[data-l2key="icon"] > i').length ) {
+    _icon = $('div[data-l2key="icon"] > i').attr('class')
+    _icon = '.' + _icon.replace(' ', '.')
+  }
+  chooseIcon(function (_icon) {
+    $('.interactAttr[data-l1key=display][data-l2key=icon]').empty().append(_icon);
+  },{icon:_icon});
+});
+
+$('.interactAttr[data-l1key=display][data-l2key=icon]').on('dblclick',function(){
+  $('.interactAttr[data-l1key=display][data-l2key=icon]').value('');
+});
 
 //contextMenu:
 $(function(){
@@ -107,8 +128,7 @@ $(function(){
           contextmenuitems[group] = {'name':group, 'items':items}
         }
 
-        if (Object.entries(contextmenuitems).length > 0 && contextmenuitems.constructor === Object)
-        {
+        if (Object.entries(contextmenuitems).length > 0 && contextmenuitems.constructor === Object){
           $('.nav.nav-tabs').contextMenu({
             selector: 'li',
             autoHide: true,
@@ -149,6 +169,7 @@ $('#bt_interactThumbnailDisplay').on('click', function () {
   $('#div_conf').hide();
   $('#interactThumbnailDisplay').show();
   $('.interactListContainer').packery();
+  addOrUpdateUrl('id',null,'{{Interactions}} - '+JEEDOM_PRODUCT_NAME);
 });
 
 $('.interactDisplayCard').on('click', function () {
@@ -168,6 +189,10 @@ $('.interactDisplayCard').on('click',function(){
   if(document.location.toString().split('#')[1] == '' || document.location.toString().split('#')[1] == undefined){
     $('.nav-tabs a[href="#generaltab"]').click();
   }
+});
+
+$('#div_pageContainer').off('change','.interactAttr').on('change','.interactAttr:visible', function () {
+  modifyWithoutSave = true;
 });
 
 $('.accordion-toggle').off('click').on('click', function () {
@@ -204,14 +229,6 @@ if (is_numeric(getUrlVars('id'))) {
   }
 }
 
-if (getUrlVars('saveSuccessFull') == 1) {
-  $('#div_alert').showAlert({message: '{{Sauvegarde effectuée avec succès}}', level: 'success'});
-}
-
-if (getUrlVars('removeSuccessFull') == 1) {
-  $('#div_alert').showAlert({message: '{{Suppression effectuée avec succès}}', level: 'success'});
-}
-
 $('#bt_testInteract,#bt_testInteract2').on('click', function () {
   $('#md_modal').dialog({title: "{{Tester les interactions}}"});
   $('#md_modal').load('index.php?v=d&modal=interact.test').dialog('open');
@@ -232,36 +249,35 @@ $("#bt_saveInteract").on('click', function () {
   var interact = $('.interact').getValues('.interactAttr')[0];
   interact.filtres.type = {};
   $('option[data-l1key=filtres][data-l2key=type]').each(function() {
-      interact.filtres.type[$(this).attr('data-l3key')] = ($(this).prop('selected') === true) ? '1' : '0';
+    interact.filtres.type[$(this).attr('data-l3key')] = ($(this).prop('selected') === true) ? '1' : '0';
   });
   interact.filtres.subtype = {};
   $('option[data-l1key=filtres][data-l2key=subtype]').each(function() {
-      interact.filtres.subtype[$(this).attr('data-l3key')] = ($(this).prop('selected') === true) ? '1' : '0';
+    interact.filtres.subtype[$(this).attr('data-l3key')] = ($(this).prop('selected') === true) ? '1' : '0';
   });
   interact.filtres.unite = {};
   $('option[data-l1key=filtres][data-l2key=unite]').each(function() {
-      interact.filtres.unite[$(this).attr('data-l3key')] = ($(this).prop('selected') === true) ? '1' : '0';
+    interact.filtres.unite[$(this).attr('data-l3key')] = ($(this).prop('selected') === true) ? '1' : '0';
   });
   interact.filtres.object = {};
   $('option[data-l1key=filtres][data-l2key=object]').each(function() {
-      interact.filtres.object[$(this).attr('data-l3key')] = ($(this).prop('selected') === true) ? '1' : '0';
+    interact.filtres.object[$(this).attr('data-l3key')] = ($(this).prop('selected') === true) ? '1' : '0';
   });
   interact.filtres.plugin = {};
   $('option[data-l1key=filtres][data-l2key=plugin]').each(function() {
-      interact.filtres.plugin[$(this).attr('data-l3key')] = ($(this).prop('selected') === true) ? '1' : '0';
+    interact.filtres.plugin[$(this).attr('data-l3key')] = ($(this).prop('selected') === true) ? '1' : '0';
   });
   interact.filtres.category = {};
   $('option[data-l1key=filtres][data-l2key=category]').each(function() {
-      interact.filtres.category[$(this).attr('data-l3key')] = ($(this).prop('selected') === true) ? '1' : '0';
+    interact.filtres.category[$(this).attr('data-l3key')] = ($(this).prop('selected') === true) ? '1' : '0';
   });
   interact.filtres.visible = {};
   $('option[data-l1key=filtres][data-l2key=visible]').each(function() {
-      interact.filtres.visible[$(this).attr('data-l3key')] = ($(this).prop('selected') === true) ? '1' : '0';
+    interact.filtres.visible[$(this).attr('data-l3key')] = ($(this).prop('selected') === true) ? '1' : '0';
   });
 
   interact.actions = {};
   interact.actions.cmd = $('#div_action .action').getValues('.expressionAttr');
-  console.log(interact)
 
   jeedom.interact.save({
     interact: interact,
@@ -277,7 +293,7 @@ $("#bt_saveInteract").on('click', function () {
 
 
 $("#bt_regenerateInteract,#bt_regenerateInteract2").on('click', function () {
-  bootbox.confirm('{{Etes-vous sûr de vouloir regénérer toutes les interations (cela peut être très long) ?}}', function (result) {
+  bootbox.confirm('{{Êtes-vous sûr de vouloir regénérer toutes les interations (cela peut être très long) ?}}', function (result) {
     if (result) {
       jeedom.interact.regenerateInteract({
         interact: {query: result},
@@ -301,6 +317,7 @@ $("#bt_addInteract,#bt_addInteract2").on('click', function () {
           $('#div_alert').showAlert({message: error.message, level: 'danger'});
         },
         success: function (data) {
+          modifyWithoutSave = false;
           loadPage('index.php?v=d&p=interact&id=' + data.id + '&saveSuccessFull=1');
         }
       });
@@ -310,7 +327,7 @@ $("#bt_addInteract,#bt_addInteract2").on('click', function () {
 
 $("#bt_removeInteract").on('click', function () {
   $.hideAlert();
-  bootbox.confirm('{{Etes-vous sûr de vouloir supprimer l\'interaction}} <span style="font-weight: bold ;">' + $('.interactDisplayCard.active .name').text() + '</span> ?', function (result) {
+  bootbox.confirm('{{Êtes-vous sûr de vouloir supprimer l\'interaction}} <span style="font-weight: bold ;">' + $('.interactDisplayCard.active .name').text() + '</span> ?', function (result) {
     if (result) {
       jeedom.interact.remove({
         id: $('.interactDisplayCard.active').attr('data-interact_id'),
@@ -318,6 +335,7 @@ $("#bt_removeInteract").on('click', function () {
           $('#div_alert').showAlert({message: error.message, level: 'danger'});
         },
         success: function () {
+          modifyWithoutSave = false;
           loadPage('index.php?v=d&p=interact&removeSuccessFull=1');
         }
       });
@@ -434,6 +452,7 @@ function displayInteract(_id){
         }
       }
       taAutosize();
+      addOrUpdateUrl('id',data.id);
       jeedom.cmd.displayActionsOption({
         params : actionOptions,
         async : false,
@@ -449,6 +468,7 @@ function displayInteract(_id){
           taAutosize();
         }
       });
+      modifyWithoutSave = false;
     }
   });
 }
@@ -467,7 +487,7 @@ function addAction(_action, _type, _name) {
   div += '<span class="input-group-btn">';
   div += '<a class="btn btn-default btn-sm bt_removeAction roundedLeft" data-type="' + _type + '"><i class="fas fa-minus-circle"></i></a>';
   div += '</span>';
-  div += '<input class="expressionAttr form-control cmdAction" data-l1key="cmd" data-type="' + _type + '" />';
+  div += '<input class="expressionAttr form-control cmdAction input-sm" data-l1key="cmd" data-type="' + _type + '" />';
   div += '<span class="input-group-btn">';
   div += '<a class="btn btn-default btn-sm listAction"" data-type="' + _type + '" title="{{Sélectionner un mot-clé}}"><i class="fas fa-tasks"></i></a>';
   div += '<a class="btn btn-default btn-sm listCmdAction roundedRight" data-type="' + _type + '"><i class="fas fa-list-alt"></i></a>';
@@ -477,7 +497,7 @@ function addAction(_action, _type, _name) {
   var actionOption_id = uniqId();
   div += '<div class="col-sm-7 actionOptions" id="'+actionOption_id+'"></div>';
   $('#div_' + _type).append(div);
-  $('#div_' + _type + ' .' + _type + ':last').setValues(_action, '.expressionAttr');
+  $('#div_' + _type + ' .' + _type + '').last().setValues(_action, '.expressionAttr');
   actionOptions.push({
     expression : init(_action.cmd, ''),
     options : _action.options,

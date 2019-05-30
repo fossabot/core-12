@@ -137,6 +137,14 @@ body {
   box-shadow: none !important;
 }
 
+.ui-page-theme-a .ui-body-inherit {
+  color: var(--link-color) !important;
+  background-color: var(--bg-modal-color) !important;
+}
+.ui-mobile label {
+  color: var(--link-color) !important;
+  text-shadow: none !important;
+}
 .ui-header > .ui-btn {
   color: var(--txt-color) !important;
 }
@@ -153,7 +161,7 @@ body {
   padding: 0 !important;
   background-color: transparent;
   box-shadow: none !important;
-
+  
 }
 .eqLogic-widget,
 .scenario-widget {
@@ -270,8 +278,14 @@ body {
   padding-top: 12px;
   line-height: 40px !important;
 }
+.scenario-widget .state i {
+  font-size: 28px !important;
+  position: relative;
+  top: 7px !important;
+  margin-right: 22px;
+}
 .scenario-widget center:last-of-type {
-  margin-bottom: 14px;
+  margin-bottom: 8px;
 }
 p.state {
   font-size: 12px !important;
@@ -311,7 +325,8 @@ p.state {
 .objectSummaryglobal .objectSummaryParent {
   font-size: 12px;
 }
-#bottompanel_objectList .objectSummaryParent {
+#bottompanel_objectList .objectSummaryParent,
+.ui-listview .objectSummaryParent {
   font-size: 12px !important;
 }
 
@@ -347,7 +362,8 @@ p.state {
   color: var(--linkHover-color) !important;
 }
 :not(.cmd) a.ui-btn-raised:not(.ui-mini) > i {
-  font-size: 2.5em !important;
+  margin-top: 5px;
+  font-size: 2em !important;
 }
 .ui-mini {
   font-size: 12px;
@@ -370,16 +386,27 @@ p.state {
 }
 
 /* bottom home menu */
-.ui-bottom-sheet-list .ui-bottom-sheet-link,
-.ui-bottom-sheet {
+.ui-panel-position-bottom.ui-panel-display-overlay a,
+.ui-listview > li > a {
+  font-size: 16px;
+  font-weight: normal;
+  text-transform: none !important;
+  padding: 6px 10px !important;
   color: var(--link-color) !important;
   background-color: var(--defaultBkg-color) !important;
 }
+.ui-panel-position-bottom.ui-panel-display-overlay a > span:first-child > i,
+.ui-panel-position-bottom.ui-panel-display-overlay > a > i{
+  display: inline-flex;
+  width: 28px;
+}
 .ui-bottom-sheet-list .ui-bottom-sheet-link:hover,
-.ui-listview > li >a:hover {
+.ui-listview > li > a:hover {
   background-color: var(--btnEq-default-color) !important;
 }
-
+.ui-bottom-sheet-list {
+  background-color: var(--defaultBkg-color) !important;
+}
 
 .cmd a.ui-btn-raised > i {
   font-size: 1.2em !important;
@@ -525,6 +552,57 @@ a.action.ui-btn {
   padding-left: 5px;
 }
 
+.logoPrimary {
+  color: var(--logo-primary-color);
+}
+.logoSecondary {
+  color: var(--logo-secondary-color);
+}
+.info,
+.info i,
+[data-coloredicons="1"] .icon_blue {
+  color: var(--al-info-color) !important;
+}
+.success,
+.success i,
+[data-coloredicons="1"] .icon_green {
+  color: var(--bt-success-color) !important;
+}
+.warning,
+.warning i,
+[data-coloredicons="1"] .icon_orange {
+  color: var(--al-warning-color) !important;
+}
+.danger,
+.danger i,
+[data-coloredicons="1"] .icon_red {
+  color: var(--al-danger-color) !important;
+}
+.yellow,
+[data-coloredicons="1"] .icon_yellow {
+  color: var(--lb-yellow-color) !important;
+}
+
+[data-coloredicons="1"] .scenario-widget:not(.disabled) .state i {
+  color: var(--bt-success-color) !important;
+}
+[data-coloredicons="1"] .scenario-widget.disabled .state i {
+  color: var(--al-danger-color) !important;
+}
+
+.alert-sucess {
+  background-color: var(--al-success-color);
+  color: var(--linkHoverLight-color);
+}
+
+.alert-danger {
+  background-color: var(--al-danger-color);
+  color: var(--linkHoverLight-color);
+}
+
+:not(#div_alert).alert {
+  padding: 0px 7px 0px 7px !important;
+}
 
 /* ________________DIVERS */
 div.ui-header.ui-bar-inherit > a[data-rel=back]{
@@ -533,7 +611,7 @@ div.ui-header.ui-bar-inherit > a[data-rel=back]{
 
 #searchContainer {
   width: 100%;
-  z-index: 9000;
+  z-index: 900;
 }
 #in_searchWidget {
   position: fixed;
@@ -542,7 +620,7 @@ div.ui-header.ui-bar-inherit > a[data-rel=back]{
   padding-left: 5px;
   height: 35px;
   width: calc(100% - 38px);
-  z-index: 9000;
+  z-index: 900;
   box-sizing: border-box;
 }
 #bt_eraseSearchInput {
@@ -554,7 +632,7 @@ div.ui-header.ui-bar-inherit > a[data-rel=back]{
   margin: 0;
   background: var(--form-bg-color) !important;
   box-shadow: none;
-  z-index: 9000;
+  z-index: 900;
   box-sizing: border-box;
 }
 #bt_eraseSearchInput i {
@@ -804,7 +882,7 @@ a.ui-table-columntoggle-btn {
   #table_message td.plugin:before {
     content: 'Source: ';
   }
-
+  
   #table_message td.message {
     background: var(--bg-modal-color);
     border-bottom: 1px solid var(--al-info-color);
@@ -822,6 +900,7 @@ a.ui-table-columntoggle-btn {
 /* ___________________________________________________________VIEW */
 .div_viewZone{
   margin-left:10px;
+  width:calc(100% - 20px);
 }
 
 .div_viewZoneTable{

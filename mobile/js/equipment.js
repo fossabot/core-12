@@ -49,26 +49,31 @@ function initEquipment(_object_id) {
     jeedom.object.toHtml({
       id: _object_id,
       version: 'mobile',
-      summary :summary,
+      summary: summary,
       error: function (error) {
         $('#div_alert').showAlert({message: error.message, level: 'danger'});
       },
       success: function (html) {
         if((_object_id == 'all' || _object_id == '')){
           var div = '';
-          summaries= [];
-          for(var i in html){
+          summaries = [];
+          for(var i in html) {
             if($.trim(html[i]) == ''){
               continue;
             }
             var id = i.split('::')[1]
+            if (!isset(objects_info[id])) {
+              continue;
+            }
             div += '<div class="div_displayEquipement">';
             div += '<legend>';
             var icon = '';
             if (isset(objects_info[id].display) && isset(objects_info[id].display.icon)) {
               icon = objects_info[id].display.icon;
             }
-            div += '<span>'+icon+'</span> '+objects_info[id].name;
+            objectName = objects_info[id].name;
+            objectName = objectName.charAt(0).toUpperCase() + objectName.slice(1)
+            div += '<span>' + icon + '</span> ' + objectName;
             div += '</legend>';
             div += '<div class="nd2-card objectSummaryHide" style="max-width:100% !important;"><div class="card-title has-supporting-text"><center><span class="objectSummary'+id+'" data-version="mobile"></span></center></div></div>';
             div += '<div class="objectHtml">';
@@ -94,22 +99,22 @@ function initEquipment(_object_id) {
           $('#div_displayEquipement > .objectHtml').packery({gutter :0});
           $('#div_displayEquipement > .objectHtml').packery({gutter :0});
         }
-        
+
       }
     });
   } else {
     $('#bottompanel').panel('open');
   }
-  
-  $(window).on("orientationchange", function (event) {
+
+  $(window).on("resize", function (event) {
     deviceInfo = getDeviceType();
     setTileSize('.eqLogic');
     setTileSize('.scenario');
     $('#div_displayEquipement > .objectHtml').packery({gutter :0});
     $('.div_displayEquipement .objectHtml').packery({gutter :0});
   });
-  
-  
+
+
   $('#in_searchWidget').off('keyup').on('keyup',function(){
     $('.div_displayEquipement').show();
     var search = $(this).value();
@@ -161,8 +166,8 @@ function initEquipment(_object_id) {
       }
     })
   });
-  
-  
+
+
   $('#bt_eraseSearchInput').off('click').on('click',function(){
     $('#in_searchWidget').val('');
     $('#in_searchWidget').keyup();

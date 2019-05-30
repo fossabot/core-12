@@ -60,6 +60,7 @@ step_2_mainpackage() {
   apt-get -y install espeak
   apt-get -y install mbrola
   apt-get -y remove brltty
+  apt-get -y remove net-tools
   echo "${VERT}étape 2 paquet principal réussie${NORMAL}"
 }
 
@@ -146,10 +147,13 @@ step_7_jeedom_customization() {
   echo "---------------------------------------------------------------------"
   echo "${JAUNE}Commence l'étape 7 personnalisation de jeedom${NORMAL}"
   cp ${WEBSERVER_HOME}/install/apache_security /etc/apache2/conf-available/security.conf
+  sed -i -e "s/WEBSERVER_HOME/${WEBSERVER_HOME}/g" /etc/apache2/conf-available/security.conf
+  
   rm /etc/apache2/conf-enabled/security.conf > /dev/null 2>&1
   ln -s /etc/apache2/conf-available/security.conf /etc/apache2/conf-enabled/
   
   cp ${WEBSERVER_HOME}/install/apache_default /etc/apache2/sites-available/000-default.conf
+  sed -i -e "s/WEBSERVER_HOME/${WEBSERVER_HOME}/g" /etc/apache2/sites-available/000-default.conf
   rm /etc/apache2/sites-enabled/000-default.conf > /dev/null 2>&1
   ln -s /etc/apache2/sites-available/000-default.conf /etc/apache2/sites-enabled/
   

@@ -782,14 +782,17 @@ class interactQuery {
 		}
 		if (isset($replace['#time#'])) {
 			$time = str_replace(array('h'), array(':'), $replace['#time#']);
-			if (strlen($time) == 2) {
+			if (strlen($time) == 1) {
+				$time .= ':00';
+			}else if (strlen($time) == 2) {
 				$time .= ':00';
 			} else if (strlen($time) == 3) {
 				$time .= '00';
 			}
+			$time = str_replace('::',':',$time);
 			$executeDate = strtotime($time);
 			if ($executeDate < strtotime('now')) {
-				$executeDate += 3600;
+				$executeDate += 3600 * 24;
 			}
 		}
 		if ($executeDate !== null && !isset($_parameters['execNow'])) {

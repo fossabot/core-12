@@ -30,7 +30,7 @@
         },
         {
           "name": "logicalId",
-          "type": "varchar(127)",
+          "type": "varchar(255)",
           "null": "YES",
           "key": "MUL",
           "default": null,
@@ -1026,6 +1026,14 @@
           "key": "",
           "default": null,
           "extra": ""
+        },
+        {
+          "name": "display",
+          "type": "text",
+          "null": "YES",
+          "key": "",
+          "default": null,
+          "extra": ""
         }
       ],
       "indexes": []
@@ -1564,6 +1572,14 @@
           "extra": ""
         },
         {
+          "name": "order",
+          "type": "int(11)",
+          "null": "YES",
+          "key": "MUL",
+          "default": null,
+          "extra": ""
+        },
+        {
           "name": "configuration",
           "type": "text",
           "null": "YES",
@@ -1572,7 +1588,18 @@
           "extra": ""
         }
       ],
-      "indexes": []
+      "indexes": {
+        "order": {
+          "Key_name": "order",
+          "Non_unique": "1",
+          "columns": {
+            "1": {
+              "column": "order",
+              "Sub_part": null
+            }
+          }
+        }
+      }
     },
     {
       "name": "planHeader",
@@ -1602,6 +1629,14 @@
           "extra": ""
         },
         {
+          "name": "order",
+          "type": "int(11)",
+          "null": "YES",
+          "key": "MUL",
+          "default": null,
+          "extra": ""
+        },
+        {
           "name": "configuration",
           "type": "text",
           "null": "YES",
@@ -1610,7 +1645,18 @@
           "extra": ""
         }
       ],
-      "indexes": []
+      "indexes": {
+        "order": {
+          "Key_name": "order",
+          "Non_unique": "1",
+          "columns": {
+            "1": {
+              "column": "order",
+              "Sub_part": null
+            }
+          }
+        }
+      }
     },
     {
       "name": "scenario",

@@ -23,6 +23,15 @@ class migrate {
 
 	public static function usbTry(){
 		//log::remove('migrate');
+		if (file_exists('/media/boot/multiboot/meson64_odroidc2.dtb.linux')) {
+			if(phpversion() < 7){
+				exec('sudo add-apt-repository "deb http://ftp.debian.org/debian stretch main contrib non-free"');
+				exec('sudo apt-get update');
+			} 
+			if (exec('which rsync | wc -l') == 0) {
+				exec('sudo apt-get install -y rsync');
+			}
+		}
 		$minSize = 7900; //En megaOct.
 		$mediaLink = '/media/migrate';
 		$iSD = 0;
@@ -60,6 +69,7 @@ class migrate {
 					$statut = 'space';
 					$space = migrate::freeSpaceUsb()/1024;
 				}
+				log::removeAll();
 			}
 		}
 		return array('statut' => $statut, 'space' => $space, 'minSpace' => $minSize);
@@ -70,9 +80,7 @@ class migrate {
 		log::remove('migrate');
 		exec('sudo rm '.$mediaLink.'/*');
 	    $backups = jeedom::listBackup();
-	    foreach ($backups as $backup) {
-		    	$lienBackup = $backup;
-	    }
+	    $lienBackup = reset($backups);
 	    if (substr(config::byKey('backup::path'), 0, 1) != '/') {
 			$backup_dir = dirname(__FILE__) . '/../../' . config::byKey('backup::path');
 		} else {
@@ -116,6 +124,9 @@ class migrate {
 				exec('sudo wget --no-check-certificate --progress=dot --dot=mega '.$url.' -a '.log::getPathToLog('migrate').' -O '.$mediaLink.'/backupJeedomDownload.tar.gz >> ' . log::getPathToLog('migrate').' 2&>1');
 				return 'telechargement';
 			}
+		}else{
+			exec('sudo wget --no-check-certificate --progress=dot --dot=mega '.$url.' -a '.log::getPathToLog('migrate').' -O '.$mediaLink.'/backupJeedomDownload.tar.gz >> ' . log::getPathToLog('migrate').' 2&>1');
+			return 'telechargement';
 		}
 	}
 	

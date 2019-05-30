@@ -137,6 +137,8 @@ class scenario {
 		$sql = 'SELECT ' . DB::buildField(__CLASS__) . '
 		FROM scenario
 		WHERE `mode` != "provoke"
+		AND `mode` != ""
+		AND `schedule` != ""
 		AND isActive=1';
 		return DB::Prepare($sql, array(), DB::FETCH_TYPE_ALL, PDO::FETCH_CLASS, __CLASS__);
 	}
@@ -591,58 +593,9 @@ class scenario {
 				* @param type $_template
 				* @return type
 				*/
-				public static function getTemplate($_template = '') {
+				public static function getTemplate() {
 					$path = __DIR__ . '/../config/scenario';
-					if (isset($_template) && $_template != '') {
-						
-					}
 					return ls($path, '*.json', false, array('files', 'quiet'));
-				}
-				
-				/*     * *************************MARKET**************************************** */
-				
-				public static function shareOnMarket(&$market) {
-					$moduleFile = __DIR__ . '/../config/scenario/' . $market->getLogicalId() . '.json';
-					if (!file_exists($moduleFile)) {
-						throw new Exception('Impossible de trouver le fichier de configuration ' . $moduleFile);
-					}
-					$tmp = jeedom::getTmpFolder('market') . '/' . $market->getLogicalId() . '.zip';
-					if (file_exists($tmp)) {
-						if (!unlink($tmp)) {
-							throw new Exception(__('Impossible de supprimer : ', __FILE__) . $tmp . __('. Vérifiez les droits', __FILE__));
-						}
-					}
-					if (!create_zip($moduleFile, $tmp)) {
-						throw new Exception(__('Echec de création du zip. Répertoire source : ', __FILE__) . $moduleFile . __(' / Répertoire cible : ', __FILE__) . $tmp);
-					}
-					return $tmp;
-				}
-				/**
-				*
-				* @param type $market
-				* @param type $_path
-				* @throws Exception
-				*/
-				public static function getFromMarket(&$market, $_path) {
-					$cibDir = __DIR__ . '/../config/scenario/';
-					if (!file_exists($cibDir)) {
-						mkdir($cibDir);
-					}
-					$zip = new ZipArchive;
-					if ($zip->open($_path) === true) {
-						$zip->extractTo($cibDir . '/');
-						$zip->close();
-					} else {
-						throw new Exception('Impossible de décompresser l\'archive zip : ' . $_path);
-					}
-				}
-				
-				public static function removeFromMarket(&$market) {
-					trigger_error('This method is deprecated', E_USER_DEPRECATED);
-				}
-				
-				public static function listMarketObject() {
-					return array();
 				}
 				
 				public static function timelineDisplay($_event) {
@@ -656,10 +609,13 @@ class scenario {
 					}
 					$object = $scenario->getObject();
 					$return['object'] = is_object($object) ? $object->getId() : 'aucun';
-					$return['html'] = '<div class="scenario" data-id="' . $_event['id'] . '">'
-					. '<div style="background-color:#e7e7e7;padding:1px;font-size:0.9em;font-weight: bold;cursor:help;">' . $_event['name'] . ' <i class="fas fa-file-text-alt pull-right cursor bt_scenarioLog"></i> <i class="fas fa-share pull-right cursor bt_gotoScenario"></i></div>'
-					. '<div style="background-color:white;padding:1px;font-size:0.8em;cursor:default;">Déclenché par ' . $_event['trigger'] . '<div/>'
-					. '</div>';
+					$return['html'] = '<div class="scenario" data-id="' . $_event['id'] . '">';
+					$return['html'] .= '<div>' . $_event['name'];
+					$return['html'] .= ' <span class="label-sm label-info" title="'.__('Scénario déclenché par',__FILE__).'">' . $_event['trigger'] . '</span>';
+					$return['html'] .= ' <i class="fas fa-file-alt pull-right cursor bt_scenarioLog" title="'.__('Log du scénario',__FILE__).'"></i> ';
+					$return['html'] .= ' <i class="fas fa-share pull-right cursor bt_gotoScenario" title="'.__('Aller au scénario',__FILE__).'"></i> ';
+					$return['html'] .= '</div>';
+					$return['html'] .= '</div>';
 					return $return;
 				}
 				
@@ -1338,10 +1294,10 @@ class scenario {
 					if ($_object_name && is_numeric($this->getObject_id()) && is_object($this->getObject())) {
 						$object = $this->getObject();
 						if ($_tag) {
-							if ($object->getDisplay('tagColor') != '') {
-								$name .= '<span class="label" style="text-shadow : none;background-color:' . $object->getDisplay('tagColor') . ' !important;color:' . $object->getDisplay('tagTextColor', 'white') . ' !important">' . $object->getName() . '</span>';
+							if ($object->getConfiguration('useCustomColor') == 1) {
+								$name .= '<span class="label" style="background-color:' . $object->getDisplay('tagColor') . ' ;color:' . $object->getDisplay('tagTextColor', 'white') . '">' . $object->getName() . '</span>';
 							} else {
-								$name .= '<span class="label label-primary" style="text-shadow : none;">' . $object->getName() . '</span>';
+								$name .= '<span class="label labelObjectHuman">' . $object->getName() . '</span>';
 							}
 						} else {
 							$name .= '[' . $object->getName() . ']';
@@ -1349,7 +1305,7 @@ class scenario {
 					} else {
 						if ($_complete) {
 							if ($_tag) {
-								$name .= '<span class="label label-default" style="text-shadow : none;">' . __('Aucun', __FILE__) . '</span>';
+								$name .= '<span class="label label-default">' . __('Aucun', __FILE__) . '</span>';
 							} else {
 								$name .= '[' . __('Aucun', __FILE__) . ']';
 							}
@@ -1589,6 +1545,7 @@ class scenario {
 				* @return $this
 				*/
 				public function setName($_name) {
+					$_name = cleanComponanteName($_name);
 					if ($_name != $this->getName()) {
 						$this->_changeState = true;
 						$this->_changed = true;

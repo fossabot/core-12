@@ -17,6 +17,7 @@
 
 printCron();
 printListener();
+initTableSorter(filter=false)
 
 $("#bt_refreshCron").on('click', function () {
   printCron();
@@ -24,7 +25,7 @@ $("#bt_refreshCron").on('click', function () {
 });
 
 $("#bt_addCron").on('click', function () {
-  $('#table_cron tbody').append(addCron({}));
+  $('#table_cron tbody').prepend(addCron({}));
 });
 
 jwerty.key('ctrl+s/⌘+s', function (e) {
@@ -38,7 +39,9 @@ $("#bt_save").on('click', function () {
     error: function (error) {
       $('#div_alert').showAlert({message: error.message, level: 'danger'});
     },
-    success: printCron
+    success: function () {
+      printCron();
+    }
   });
 });
 
@@ -105,7 +108,7 @@ $('#table_cron').delegate('.cronAttr[data-l1key=deamon]', 'change', function () 
   }
 });
 
-$('#div_pageContainer').delegate('.cronAttr', 'change', function () {
+$('#div_pageContainer').off('change','.cronAttr').on('change','.cronAttr:visible',  function () {
   modifyWithoutSave = true;
 });
 
@@ -121,7 +124,12 @@ function printCron() {
       }
       $('#table_cron tbody').append(tr);
       modifyWithoutSave = false;
+      $("#table_cron").trigger("update");
+      setTimeout(function(){
+        modifyWithoutSave = false;
+      },1000)
       $.hideLoading();
+      $('#table_cron').find('th[data-column="0"]').trigger('sort')
     }
   });
 }
@@ -133,69 +141,74 @@ function addCron(_cron) {
     disabled ='disabled';
   }
   var tr = '<tr id="' + init(_cron.id) + '">';
-  tr += '<td class="option"><span class="cronAttr" data-l1key="id"></span></td>';
-  tr += '<td>';
-  if(init(_cron.id) != ''){
-    tr += '<a class="btn btn-xs display"><i class="fas fa-file"></i></a> ';
-  }
-  if(init(_cron.deamon) == 0){
-    if (init(_cron.state) == 'run') {
-      tr += ' <a class="btn btn-danger btn-xs stop" style="color : white;"><i class="fas fa-stop"></i></a>';
-    }
-    if (init(_cron.state) != '' && init(_cron.state) != 'starting' && init(_cron.state) != 'run' && init(_cron.state) != 'stoping') {
-      tr += ' <a class="btn btn-success btn-xs start" style="color : white;"><i class="fas fa-play"></i></a>';
-    }
-  }
-  tr += '</td>';
-  tr += '<td class="enable"><center>';
+  tr += '<td style="width:50px;"><span class="cronAttr label label-info" data-l1key="id"></span></td>';
+  tr += '<td style="width:65px;"><center>';
   tr += '<input type="checkbox"class="cronAttr" data-l1key="enable" checked '+disabled+'/>';
   tr += '</center></td>';
   tr += '<td>';
   tr += init(_cron.pid);
   tr += '</td>';
-  tr += '<td class="deamons">';
+  tr += '<td style="width:100px;">';
   tr += '<input type="checkbox" class="cronAttr" data-l1key="deamon" '+disabled+' /></span> ';
   tr += '<input class="cronAttr form-control input-sm" data-l1key="deamonSleepTime" style="width : 50px; display : inline-block;" />';
   tr += '</td>';
-  tr += '<td class="once">';
+  tr += '<td style="width:70px;">';
   if(init(_cron.deamon) == 0){
-    tr += '<input type="checkbox" class="cronAttr" data-l1key="once" /></span> ';
+    tr += '<center><input type="checkbox" class="cronAttr" data-l1key="once" /></center></span> ';
   }
   tr += '</td>';
-  tr += '<td class="class"><input class="form-control cronAttr input-sm" data-l1key="class" '+disabled+' /></td>';
-  tr += '<td class="function"><input class="form-control cronAttr input-sm" data-l1key="function" '+disabled+' /></td>';
-  tr += '<td class="schedule"><input class="cronAttr form-control input-sm" data-l1key="schedule" '+disabled+' /></td>';
-  tr += '<td class="function">';
+  tr += '<td><input class="form-control cronAttr input-sm" data-l1key="class" '+disabled+' /></td>';
+  tr += '<td><input class="form-control cronAttr input-sm" data-l1key="function" '+disabled+' /></td>';
+  tr += '<td><input class="cronAttr form-control input-sm" data-l1key="schedule" '+disabled+' /></td>';
+  tr += '<td>';
   if(init(_cron.deamon) == 0){
     tr += '<input class="form-control cronAttr input-sm" data-l1key="timeout" />';
   }
   tr += '</td>';
-  tr += '<td class="lastRun">';
+  tr += '<td>';
   tr += init(_cron.lastRun);
   tr += '</td>';
-  tr += '<td class="runtime">';
+  tr += '<td>';
   tr += init(_cron.runtime,'0')+'s';
   tr += '</td>';
-  tr += '<td class="state">';
+  tr += '<td style="width:60px;">';
   var label = 'label label-info';
+  var state = init(_cron.state);
   if (init(_cron.state) == 'run') {
     label = 'label label-success';
+    state = '{{En cours}}';
   }
   if (init(_cron.state) == 'stop') {
     label = 'label label-danger';
+    state = '{{Arrêté}}'
   }
   if (init(_cron.state) == 'starting') {
     label = 'label label-warning';
+    state = '{{Démarrage}}';
   }
   if (init(_cron.state) == 'stoping') {
     label = 'label label-warning';
+    state = '{{Arrêt}}';
   }
-  tr += '<span class="' + label + '">' + init(_cron.state) + '</span>';
+  tr += '<span class="' + label + '">' + state + '</span>';
   tr += '</td>';
-  tr += '<td class="action">';
-  tr += '<i class="fas fa-minus-circle remove pull-right cursor"></i>';
+
+  tr += '<td style="width:85px;">';
+  if(init(_cron.id) != ''){
+    tr += '<a class="btn btn-xs display" title="{{Détails de cette tâche}}"><i class="fas fa-file"></i></a> ';
+  }
+  if(init(_cron.deamon) == 0){
+    if (init(_cron.state) == 'run') {
+      tr += ' <a class="btn btn-danger btn-xs stop" title="{{Arrêter cette tâche}}"><i class="fas fa-stop"></i></a>';
+    }
+    if (init(_cron.state) != '' && init(_cron.state) != 'starting' && init(_cron.state) != 'run' && init(_cron.state) != 'stoping') {
+      tr += ' <a class="btn btn-xs btn-success start" title="{{Démarrer cette tâche}}"><i class="fas fa-play"></i></a>';
+    }
+  }
+  tr += ' <a class="btn btn-danger btn-xs" title="{{Supprimer cette tâche}}"><i class="icon maison-poubelle remove"></i></a>';
   tr += '</td>';
   tr += '</tr>';
+  $("#table_cron").trigger("update");
   var result = $(tr);
   result.setValues(_cron, '.cronAttr');
   return result;
@@ -270,18 +283,22 @@ function getDeamonState(){
             html += deamonInfo.plugin.name;
             html += '</td>';
             html += '<td>';
-            html += deamonInfo.state;
+            if ( deamonInfo.state == 'ok') {
+              html += '<span class="label label-success">OK</span>';
+            } else {
+              html += '<span class="label label-danger">' + deamonInfo.state.toUpperCase() + '</span>';
+            }
             html += '</td>';
             html += '<td>';
             html += deamonInfo.last_launch;
             html += '</td>';
             html += '<td>';
-            html += '<a class="bt_deamonAction btn btn-success" data-action="start" data-plugin="'+deamonInfo.plugin.id+'"><i class="fas fa-play"></i></a> ';
+            html += '<a class="bt_deamonAction btn btn-xs  btn-success" data-action="start" data-plugin="'+deamonInfo.plugin.id+'"><i class="fas fa-play"></i></a> ';
             if(deamonInfo.auto == 0){
-              html += '<a class="bt_deamonAction btn btn-danger" data-action="stop" data-plugin="'+deamonInfo.plugin.id+'"><i class="fas fa-stop"></i></a> ';
-              html += '<a class="bt_deamonAction btn btn-danger" data-action="enableAuto" data-plugin="'+deamonInfo.plugin.id+'"><i class="fas fa-magic"></i></a> ';
+              html += '<a class="bt_deamonAction btn btn-xs  btn-danger" data-action="stop" data-plugin="'+deamonInfo.plugin.id+'"><i class="fas fa-stop"></i></a> ';
+              html += '<a class="bt_deamonAction btn btn-xs  btn-danger" data-action="enableAuto" data-plugin="'+deamonInfo.plugin.id+'"><i class="fas fa-magic"></i></a> ';
             }else{
-              html += '<a class="bt_deamonAction btn btn-success" data-action="disableAuto" data-plugin="'+deamonInfo.plugin.id+'"><i class="fas fa-times"></i></a> ';
+              html += '<a class="bt_deamonAction btn btn-xs  btn-success" data-action="disableAuto" data-plugin="'+deamonInfo.plugin.id+'"><i class="fas fa-times"></i></a> ';
             }
             html += '</td>';
             html += '</tr>';

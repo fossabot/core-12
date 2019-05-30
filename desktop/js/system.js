@@ -21,7 +21,7 @@ $('.bt_systemCommand').off('click').on('click',function(){
   var command = $(this).attr('data-command');
   $('#pre_commandResult').empty();
   if($(this).parent().hasClass('list-group-item-danger')){
-    bootbox.confirm('{{Etes-vous sûr de vouloir éxécuter cette commande : }}<strong>'+command+'</strong> ? {{Celle-ci est classé en dangereuse}}', function (result) {
+    bootbox.confirm('{{Êtes-vous sûr de vouloir éxécuter cette commande : }}<strong>'+command+'</strong> ? {{Celle-ci est classé en dangereuse}}', function (result) {
       if (result) {
         jeedom.ssh({
           command : command,
@@ -94,4 +94,26 @@ $('#in_specificCommand').keypress(function(e) {
       }
     })
   }
+});
+
+$('#bt_cleanFileSystemRight').off('click').on('click',function(){
+  jeedom.cleanFileSystemRight({
+    error: function (error) {
+      $('#div_alert').showAlert({message: error.message, level: 'danger'});
+    },
+    success: function (data) {
+      $('#div_alert').showAlert({message: '{{Remise à plat des droits fait avec succès}}', level: 'success'});
+    }
+  });
+});
+
+$('#bt_consitency').off('click').on('click',function(){
+  jeedom.consistency({
+    error: function (error) {
+      $('#div_alert').showAlert({message: error.message, level: 'danger'});
+    },
+    success: function (data) {
+      $('#div_alert').showAlert({message: '{{Lance de la vérification fait, voir le log consistency pour voir le résultat}}', level: 'success'});
+    }
+  });
 });

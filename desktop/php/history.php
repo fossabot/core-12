@@ -11,7 +11,7 @@ $date = array(
 ?>
 
 <ul class="nav nav-tabs" role="tablist" style="margin-top:4px;">
-	<li role="presentation" class="active"><a href="#historytab" aria-controls="home" role="tab" data-toggle="tab"><i class="fas fa-bar-chart-o"></i> {{Historique}}</a></li>
+	<li role="presentation" class="active"><a href="#historytab" aria-controls="home" role="tab" data-toggle="tab"><i class="fas fa-chart-bar"></i> {{Historique}}</a></li>
 	<li role="presentation"><a id="bt_tabTimeline" href="#timelinetab" aria-controls="profile" role="tab" data-toggle="tab" style="padding:10px 5px !important"><i class="far fa-clock"></i> {{Timeline}}</a></li>
 </ul>
 
@@ -27,8 +27,8 @@ $date = array(
 							<textarea class="form-control roundedLeft" id='in_calculHistory' placeholder="{{Historique calculé}}" ></textarea>
 							<span class="input-group-btn">
 								<a class="btn btn-default" id="bt_findCmdCalculHistory" title="{{Sélectionner la commande}}"><i class="fas fa-list-alt"></i>
-								</a><a class="btn btn-success" id="bt_displayCalculHistory"><i class="fas fa-check"></i>
-								</a><a class="btn btn-default roundedRight" id="bt_configureCalculHistory"><i class="fas fa-cogs"></i></a>
+								</a><a class="btn btn-success" id="bt_displayCalculHistory" title="{{Afficher le graphique calculé}}"><i class="fas fa-check"></i>
+								</a><a class="btn btn-default roundedRight" id="bt_configureCalculHistory" title="{{Configuration des formules de calcul}}"><i class="fas fa-cogs"></i></a>
 							</span>
 						</div>
 					</li>
@@ -51,13 +51,13 @@ $date = array(
 							}
 							$object = $eqLogic->getObject();
 							if (is_object($object)) {
-								if ($object->getDisplay('tagColor') != '') {
-									echo '<span class="label cursor displayObject" data-object_id="o' . $eqLogic->getObject_id() . '" style="text-shadow : none;background-color:' . $object->getDisplay('tagColor') . ';color:' . $object->getDisplay('tagTextColor', 'white') . '">' . $object->getName() . ' <i class="fas fa-arrow-circle-right"></i></span>';
+								if ($object->getConfiguration('useCustomColor') == 1) {
+									echo '<span class="label cursor displayObject" data-object_id="o' . $eqLogic->getObject_id() . '" style="background-color:' . $object->getDisplay('tagColor') . ';color:' . $object->getDisplay('tagTextColor', 'white') . '">' . $object->getName() . ' <i class="fas fa-arrow-circle-right"></i></span>';
 								} else {
-									echo '<span class="label label-primary cursor displayObject" data-object_id="o' . $eqLogic->getObject_id() . '" style="text-shadow : none;">' . $object->getName() . ' <i class="fas fa-arrow-circle-right"></i></span>';
+									echo '<span class="label cursor displayObject labelObjectHuman" data-object_id="o' . $eqLogic->getObject_id() . '">' . $object->getName() . ' <i class="fas fa-arrow-circle-right"></i></span>';
 								}
 							} else {
-								echo '<span class="label label-default cursor displayObject" data-object_id="o' . $eqLogic->getObject_id() . '" style="text-shadow : none;">' . __('Aucun', __FILE__) . ' <i class="fas fa-arrow-circle-right"></i></span>';
+								echo '<span class="label label-default cursor displayObject" data-object_id="o' . $eqLogic->getObject_id() . '>' . __('Aucun', __FILE__) . ' <i class="fas fa-arrow-circle-right"></i></span>';
 							}
 							echo '<br/>';
 							echo '<div class="cmdList" data-object_id="o' . $eqLogic->getObject_id() . '" style="display:none;margin-left : 20px;">';
@@ -139,65 +139,25 @@ $date = array(
 		</div>
 	</div>
 	<div role="tabpanel" class="tab-pane" id="timelinetab">
-		<br/>
-		<div class="row form-group">
-			<div class="col-lg-3 col-sm-12 center">
-				<div class="input-group btn-group" role="group" aria-label="...">
-					<a class="btn btn-sm btn-default bt_timelineZoom roundedLeft" data-zoom="h">H</a>
-					<a class="btn btn-sm btn-default bt_timelineZoom" data-zoom="d">J</a>
-					<a class="btn btn-sm btn-default bt_timelineZoom" data-zoom="w">S</a>
-					<a class="btn btn-sm btn-default bt_timelineZoom" data-zoom="m">M</a>
-					<a class="btn btn-sm btn-default bt_timelineZoom" data-zoom="y">A</a>
-					<a class="btn btn-sm btn-default bt_timelineZoom" data-zoom="all">{{Tous}}</a>
-					<a class="btn btn-sm btn-success roundedRight" id="bt_refreshTimeline"><i class="fas fa-sync"></i> {{Rafraîchir}}</a>
-				</div>
-			</div>
-			<div class="col-lg-3 col-sm-12 center">
-				<a class="btn btn-sm btn-default" id="bt_configureTimelineCommand"><i class="fas fa-cogs"></i> {{Commandes}}</a>
-				<a class="btn btn-sm btn-default" id="bt_configureTimelineScenario"><i class="fas fa-cogs"></i> {{Scénarios}}</a>
-			</div>
-			<div class="col-lg-3 col-sm-12">
-				<select class="form-control input-sm" id="sel_pluginsTimeline">
-					<option value="all">{{Tous (Plugins)}}</option>
-					<?php
-					foreach (plugin::listPlugin() as $plugin) {
-						echo '<option value="' . $plugin->getId() . '">' . $plugin->getName() . '</option>';
-					}
-					?>
-				</select>
-				<select class="form-control input-sm" id="sel_categoryTimeline">
-					<option value="all">{{Tous (Catégories)}}</option>
-					<?php
-					foreach (jeedom::getConfiguration('eqLogic:category') as $key => $value) {
-						echo '<option value="' . $key . '">' . $value['name'] . '</option>';
-					}
-					?>
-				</select>
-			</div>
-			<div class="col-lg-3 col-sm-12">
-				<select class="form-control input-sm" id="sel_objectsTimeline">
-					<option value="all">{{Tous (Objets)}}</option>
-					<?php
-					foreach (jeeObject::all() as $object) {
-						echo '<option value="' . $object->getId() . '">' . $object->getName() . '</option>';
-					}
-					?>
-				</select>
-				<select class="form-control input-sm" id="sel_typesTimeline">
-					<option value="all">{{Tous (Types)}}</option>
-					<option value="cmd">{{Commandes}}</option>
-					<option value="scenario">{{Scénarios}}</option>
-				</select>
-			</div>
-		</div>
-	</div>
-	<div class="row">
-		<div class="col-sm-12">
-			<div id="div_visualization"></div>
-		</div>
-	</div>
+        <div class="input-group input-group-sm">
+			<span class="input-group-btn">
+				<a class="btn btn-sm btn-success pull-right roundedRight" id="bt_refreshTimeline"><i class="fas fa-sync"></i> {{Rafraîchir}}
+				</a><a id="bt_openCmdHistoryConfigure2" class="btn btn-default btn-sm pull-right roundedLeft"><i class="fas fa-cogs"></i> {{Configuration}}</a>
+            </span>
+        </div>
+		<table id="table_timeline" class="table table-condensed table-bordered tablesorter">
+			<thead>
+				<tr>
+					<th data-sorter="shortDate">{{Date}}</th>
+					<th>{{Type}}</th>
+					<th>{{Visuel}}</th>
+				</tr>
+			</thead>
+			<tbody>
+			</tbody>
+		</table>
 
-</div>
+	</div>
 </div>
 
 <?php include_file("desktop", "history", "js");?>

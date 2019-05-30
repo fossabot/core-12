@@ -86,7 +86,7 @@ jeedom.cmd.execute = function(_params) {
           }
         }else if(data.code == -32006){
           if ($.mobile) {
-            var result = confirm("{{Etes-vous sûr de vouloir faire cette action ?}}")
+            var result = confirm("{{Êtes-vous sûr de vouloir faire cette action ?}}")
             if(result){
               _params.confirmAction = 1;
               jeedom.cmd.execute(_params);
@@ -107,7 +107,7 @@ jeedom.cmd.execute = function(_params) {
               return data;
             }
           }else{
-            bootbox.confirm("{{Etes-vous sûr de vouloir faire cette action ?}}", function (result) {
+            bootbox.confirm("{{Êtes-vous sûr de vouloir faire cette action ?}}", function (result) {
               if(result){
                 _params.confirmAction = 1;
                 jeedom.cmd.execute(_params);
@@ -308,6 +308,7 @@ jeedom.cmd.refreshByEqLogic = function(_params) {
   var cmds = $('.cmd[data-eqLogic_id=' + _params.eqLogic_id + ']');
   if(cmds.length > 0){
     $(cmds).each(function(){
+      var cmd = $(this);
       if($(this).closest('.eqLogic[data-eqLogic_id='+ _params.eqLogic_id+']').html() != undefined){
         return true;
       }
@@ -316,7 +317,13 @@ jeedom.cmd.refreshByEqLogic = function(_params) {
         id : $(this).attr('data-cmd_id'),
         version : $(this).attr('data-version'),
         success : function(data){
-          $('.cmd[data-cmd_id=' + data.id + ']').replaceWith(data.html);
+          var html = $(data.html);
+          var uid = html.attr('data-cmd_uid');
+          if(uid != 'undefined'){
+            cmd.attr('data-cmd_uid',uid);
+          }
+          cmd.empty().html(html.children());
+          cmd.attr("class", html.attr("class"));
         }
       })
     });
@@ -766,43 +773,35 @@ jeedom.cmd.displayActionsOption = function(_params) {
 };
 
 jeedom.cmd.normalizeName = function(_tagname) {
-  var arrayOn = ['on', 'marche', 'go', 'lock'];
-  var arrayOff = ['off', 'arret', 'arrêt', 'stop', 'unlock'];
-  var name = $.trim(_tagname.toLowerCase().replace('<br/>','').replace('<br>',''));
-  if (arrayOn.indexOf(name) >= 0) {
-    return 'on';
-  } else if (arrayOff.indexOf(name) >= 0) {
-    return 'off';
+  cmdName = _tagname.toLowerCase().trim()
+  var cmdTests = []
+  var cmdType = null
+  var cmdList = {
+    'on':'on',
+    'off':'off',
+    'monter':'on',
+    'descendre':'off',
+    'ouvrir':'on',
+    'fermer':'off',
+    'activer':'on',
+    'desactiver':'off',
+    'désactiver':'off',
+    'lock':'on',
+    'unlock':'off',
+    'marche':'on',
+    'arret':'off',
+    'arrêt':'off',
+    'stop':'off',
+    'go':'on'
   }
-  if (name.indexOf("lock") == 0) {
-    return 'on';
+  var cmdTestsList = [' ', '-', '_']
+  for(var i in cmdTestsList){
+    cmdTests = cmdTests.concat(cmdName.split(cmdTestsList[i]))
   }
-  if (name.indexOf("unlock") == 0) {
-    return 'off';
-  }
-  if (name.indexOf("descendre") == 0) {
-    return 'off';
-  }
-  if (name.indexOf("on") != -1) {
-    return 'on';
-  }
-  if (name.indexOf("off") != -1) {
-    return 'off';
-  }
-  if (name.indexOf("désactiver") != -1) {
-    return 'off';
-  }
-  if (name.indexOf("desactiver") != -1) {
-    return 'off';
-  }
-  if (name.indexOf("activer") != -1) {
-    return 'on';
-  }
-  if (name.indexOf("ouvrir") != -1) {
-    return 'ouvrir';
-  }
-  if (name.indexOf("fermer") != -1) {
-    return 'fermer';
+  for(var j in cmdTests){
+    if(cmdList[cmdTests[j]]){
+      return cmdList[cmdTests[j]];
+    }
   }
   return _tagname;
 }
@@ -841,12 +840,15 @@ jeedom.cmd.displayDuration = function(_date,_el){
     var h = Math.floor(d % 86400 / 3600);
     var m = Math.floor(d % 3600 / 60);
     var s = Math.floor( d - (j*86400 + h*3600 + m*60) );
-    if (d > 3599) {
-    var interval = 60000;
-    _el.empty().append(((j > 0 ? j + " j " : "") + (h > 0 ? h + " h " : "") + (m > 0 ? (h > 0 && m < 10 ? "0" : "") + m + " min" : "0 min")));
+    if (d > 86399) {
+      var interval = 3600000;
+      _el.empty().append(((j + " j ") + ((h < 10 ? "0" : "") + h + " h")));
+    } else if (d > 3599 && d < 86400) {
+      var interval = 60000;
+      _el.empty().append(((h + " h ") + ((m < 10 ? "0" : "") + m + " m")));
     } else {
-    var interval = 10000;
-     _el.empty().append(((m > 0 ? m + " min " : "") + (s > 0 ? (m > 0 && s < 10 ? "0" : "") + s + " s " : "0 s")));
+      var interval = 10000;
+      _el.empty().append(((m > 0 ? m + " m " : "") + (s > 0 ? (m > 0 && s < 10 ? "0" : "") + s + " s " : "0 s")));
     }
     var myinterval = setInterval(function(){
       var d = ((Date.now() + clientServerDiffDatetime) - _el.attr('data-time')) / 1000;
@@ -854,12 +856,15 @@ jeedom.cmd.displayDuration = function(_date,_el){
       var h = Math.floor(d % 86400 / 3600);
       var m = Math.floor(d % 3600 / 60);
       var s = Math.floor( d - (j*86400 + h*3600 + m*60) );
-      if (d > 3599) {
+      if (d > 86399) {
+        var interval = 3600000;
+        _el.empty().append(((j + " j ") + ((h < 10 ? "0" : "") + h + " h")));
+      } else if (d > 3599 && d < 86400) {
         var interval = 60000;
-         _el.empty().append(((j > 0 ? j + " j " : "") + (h > 0 ? h + " h " : "") + (m > 0 ? (h > 0 && m < 10 ? "0" : "") + m + " min" : "0 min")));
+        _el.empty().append(((h + " h ") + ((m < 10 ? "0" : "") + m + " m")));
       } else {
         var interval = 10000;
-            _el.empty().append(((m > 0 ? m + " min " : "") + (s > 0 ? (m > 0 && s < 10 ? "0" : "") + s + " s " : "0 s")));
+        _el.empty().append(((m > 0 ? m + " m " : "") + (s > 0 ? (m > 0 && s < 10 ? "0" : "") + s + " s " : "0 s")));
       }
     }, interval);
     _el.attr('data-interval',myinterval);
@@ -873,13 +878,16 @@ jeedom.cmd.displayDuration = function(_date,_el){
         var h = Math.floor(d % 86400 / 3600);
         var m = Math.floor(d % 3600 / 60);
         var s = Math.floor( d - (j*86400 + h*3600 + m*60) );
-        if (d > 3599) {
-            interval = 60000;
-            _el.empty().append(((j > 0 ? j + " j " : "") + (h > 0 ? h + " h " : "") + (m > 0 ? (h > 0 && m < 10 ? "0" : "") + m + " min" : "0 min")));
+        if (d > 86399) {
+          interval = 3600000;
+          _el.empty().append(((j + " j ") + ((h < 10 ? "0" : "") + h + " h")));
+        } else if (d > 3599 && d < 86400) {
+          interval = 60000;
+          _el.empty().append(((h + " h ") + ((m < 10 ? "0" : "") + m + " m")));
         } else {
-            interval = 10000;
-            _el.empty().append(((m > 0 ? m + " min " : "") + (s > 0 ? (m > 0 && s < 10 ? "0" : "") + s + " s " : "0 s")));
-       }
+          interval = 10000;
+          _el.empty().append(((m > 0 ? m + " m " : "") + (s > 0 ? (m > 0 && s < 10 ? "0" : "") + s + " s " : "0 s")));
+        }
       }else{
         _el.empty().append("0 s");
       }

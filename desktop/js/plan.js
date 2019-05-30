@@ -249,18 +249,6 @@ if(deviceInfo.type == 'desktop' && user_isAdmin == 1){
             }
           },
           sep4 : "---------",
-          snap: {
-            name: "{{Aimanter les élements}}",
-            type: 'checkbox',
-            radio: 'radio',
-            selected:  editOption.snap,
-            events: {
-              click : function(e) {
-                editOption.snap = $(this).value();
-                initEditOption(1);
-              }
-            }
-          },
           snapGrid: {
             name: "{{Aimanter à la grille}}",
             type: 'checkbox',
@@ -295,7 +283,7 @@ if(deviceInfo.type == 'desktop' && user_isAdmin == 1){
           return !this.data('editOption.state');
         },
         callback: function(key, opt){
-          bootbox.confirm('{{Etes-vous sûr de vouloir supprimer ce design ?}}', function (result) {
+          bootbox.confirm('{{Êtes-vous sûr de vouloir supprimer ce design ?}}', function (result) {
             if (result) {
               jeedom.plan.removeHeader({
                 id:planHeader_id,
@@ -367,7 +355,7 @@ if(deviceInfo.type == 'desktop' && user_isAdmin == 1){
       },
     }
   });
-  
+
   $.contextMenu({
     selector: '.div_displayObject > .eqLogic-widget,.div_displayObject > .cmd-widget,.scenario-widget,.plan-link-widget,.text-widget,.view-link-widget,.graph-widget,.image-widget,.zone-widget,.summary-widget',
     zIndex: 9999,
@@ -421,7 +409,7 @@ if(deviceInfo.type == 'desktop' && user_isAdmin == 1){
                   $(this).dialog("close");
                 },
                 "Valider": function () {
-                  var tr = $('#table_addViewData tbody tr:first');
+                  var tr = $('#table_addViewData tbody tr').first();
                   var options = [];
                   while (tr.attr('data-link_id') != undefined) {
                     if (tr.find('.enable').is(':checked')) {
@@ -478,7 +466,7 @@ if(deviceInfo.type == 'desktop' && user_isAdmin == 1){
               displayObject(data.plan,data.html);
             }
           });
-          
+
         }
       },
       lock: {
@@ -497,7 +485,7 @@ if(deviceInfo.type == 'desktop' && user_isAdmin == 1){
       },
     }
   });
-  
+
 }
 /**************************************init*********************************************/
 displayPlan();
@@ -664,19 +652,73 @@ function fullScreen(_mode) {
   }
 }
 
+
+var dragClick = {x: 0, y: 0}
+var dragStartPos = {top: 0, left: 0}
+var dragStep = false
+function draggableStartFix(event, ui) {
+  zoomScale = parseFloat($(ui.helper).attr('data-zoom'))
+  if (editOption.grid == 1) {
+    dragStep = editOption.gridSize[0]
+  } else {
+    dragStep = false
+  }
+
+  dragClick.x = event.clientX
+  dragClick.y = event.clientY
+  dragStartPos = ui.originalPosition
+
+  $container = $('.div_displayObject')
+  containerWidth = $container.width()
+  containerHeight = $container.height()
+
+  clientWidth = $(ui.helper[0]).width()
+  clientHeight = $(ui.helper[0]).height()
+
+  marginLeft = $(ui.helper[0]).css('margin-left')
+  marginLeft = parseFloat(marginLeft.replace('px', ''))
+
+  minLeft = 0 - marginLeft
+  minTop = 0
+
+  maxLeft = containerWidth + minLeft - (clientWidth * zoomScale)
+  maxTop = containerHeight + minTop - (clientHeight * zoomScale)
+}
+function draggableDragFix(event, ui) {
+  newLeft = event.clientX - dragClick.x + dragStartPos.left
+  newTop = event.clientY - dragClick.y + dragStartPos.top
+
+  if (newLeft < minLeft) newLeft = minLeft
+  if (newLeft > maxLeft) newLeft = maxLeft
+
+  if (newTop < minTop) newTop = minTop
+  if (newTop > maxTop) newTop = maxTop
+
+  if (dragStep) {
+    newLeft = (Math.round(newLeft / dragStep) * dragStep)
+    newTop = (Math.round(newTop / dragStep) * dragStep)
+  }
+
+  ui.position = {left: newLeft, top: newTop}
+}
+
 function initEditOption(_state) {
+  var $container = $('.container-fluid.div_displayObject'), _zoom, containmentW, containmentH, objW, objH;
   if (_state) {
+    $('.tooltipstered').tooltipster('disable')
+    $('.div_displayObject').addClass('editingMode')
     $('.plan-link-widget,.view-link-widget,.graph-widget,.div_displayObject >.eqLogic-widget,.div_displayObject > .cmd-widget,.scenario-widget,.text-widget,.image-widget,.zone-widget,.summary-widget').draggable({
-      snap : (editOption.snap == 1),
-      grid : (editOption.grid == 1) ? editOption.gridSize : false,
       containment: 'parent',
+      cursor: 'move',
       cancel : '.locked',
+      start: draggableStartFix,
+      drag: draggableDragFix,
       stop: function( event, ui ) {
         savePlan(false,false);
       }
     });
     if(editOption.highlight){
-      $('.plan-link-widget,.view-link-widget,.graph-widget,.div_displayObject >.eqLogic-widget,.div_displayObject > .cmd-widget,.scenario-widget,.text-widget,.image-widget,.zone-widget,.summary-widget').addClass('editingMode');
+      $('.plan-link-widget,.view-link-widget,.graph-widget,.div_displayObject > .eqLogic-widget,.div_displayObject > .cmd-widget,.scenario-widget,.text-widget,.image-widget,.zone-widget,.summary-widget').addClass('editingMode');
     }else{
       $('.plan-link-widget,.view-link-widget,.graph-widget,.div_displayObject >.eqLogic-widget,.div_displayObject > .cmd-widget,.scenario-widget,.text-widget,.image-widget,.zone-widget,.summary-widget').removeClass('editingMode').removeClass('contextMenu_select');
     }
@@ -686,8 +728,26 @@ function initEditOption(_state) {
       $('.div_grid').hide();
     }
     $('.plan-link-widget,.view-link-widget,.graph-widget,.div_displayObject >.eqLogic-widget,.scenario-widget,.text-widget,.image-widget,.zone-widget,.summary-widget').resizable({
-      containment: "parent",
       cancel : '.locked',
+      handles: 'n,e,s,w,se,sw,nw,ne',
+      start: function( event, ui ) {
+        zoomScale = parseFloat($(ui.helper).attr('data-zoom'))
+        if (editOption.grid == 1) {
+          dragStep = editOption.gridSize[0]
+          dragStep = dragStep / zoomScale
+        } else {
+          dragStep = false
+        }
+      },
+      resize: function( event, ui ) {
+        if (dragStep) {
+          newWidth = (Math.round(ui.size.width / dragStep) * dragStep)
+          newHeight = (Math.round(ui.size.height / dragStep) * dragStep)
+          ui.element.width(newWidth)
+          ui.element.height(newHeight)
+        }
+        ui.element.find('.camera').trigger('resize');
+      },
       stop: function( event, ui ) {
         savePlan(false,false);
       }
@@ -700,10 +760,12 @@ function initEditOption(_state) {
     try{
       $('.plan-link-widget,.view-link-widget,.graph-widget,.div_displayObject >.eqLogic-widget,.div_displayObject > .cmd-widget,.scenario-widget,.text-widget,.image-widget,.zone-widget,.summary-widget').contextMenu(true);
     }catch (e) {
-      
+
     }
   }else{
+    $('.div_displayObject').removeClass('editingMode')
     try{
+      $('.tooltipstered').tooltipster('enable')
       $('.plan-link-widget,.view-link-widget,.graph-widget,.div_displayObject >.eqLogic-widget,.div_displayObject > .cmd-widget,.scenario-widget,.text-widget,.image-widget,.zone-widget,.summary-widget').draggable("destroy");
       $('.plan-link-widget,.view-link-widget,.graph-widget,.div_displayObject >.eqLogic-widget,.div_displayObject > .cmd-widget,.scenario-widget,.text-widget,.image-widget,.zone-widget,.summary-widget').removeClass('editingMode');
       $('.plan-link-widget,.view-link-widget,.graph-widget,.div_displayObject >.eqLogic-widget,.scenario-widget,.text-widget,.image-widget,.zone-widget,.summary-widget').resizable("destroy");
@@ -711,13 +773,13 @@ function initEditOption(_state) {
         $(this).attr('href', $(this).attr('data-href'));
       });
     }catch (e) {
-      
+
     }
     $('.div_grid').hide();
     try{
       $('.plan-link-widget,.view-link-widget,.graph-widget,.div_displayObject >.eqLogic-widget,.div_displayObject > .cmd-widget,.scenario-widget,.text-widget,.image-widget,.zone-widget,.summary-widget').contextMenu(false);
     }catch (e) {
-      
+
     }
   }
 }
@@ -769,11 +831,11 @@ function displayPlan(_code) {
         $('.div_displayObject').append(data.image);
       }
       if (isset(data.configuration.backgroundTransparent) && data.configuration.backgroundTransparent == 1) {
-        $('.div_backgroundPlan').css('background-color','transparent');
+        $('.div_displayObject').css('background-color','transparent');
       }else if (isset(data.configuration.backgroundColor)) {
-        $('.div_backgroundPlan').css('background-color',data.configuration.backgroundColor);
+        $('.div_displayObject').css('background-color',data.configuration.backgroundColor);
       }else{
-        $('.div_backgroundPlan').css('background-color','#ffffff');
+        $('.div_displayObject').css('background-color','#ffffff');
       }
       if (data.configuration != null && init(data.configuration.desktopSizeX) != '' && init(data.configuration.desktopSizeY) != '') {
         $('.div_displayObject').height(data.configuration.desktopSizeY).width(data.configuration.desktopSizeX);
@@ -812,7 +874,7 @@ function displayPlan(_code) {
           try {
             $('.div_displayObject').append(objects);
           }catch(e) {
-            
+
           }
           initEditOption(editOption.state);
           initReportMode();
@@ -919,41 +981,117 @@ function displayObject(_plan,_html, _noRender) {
   html.css('position', 'absolute');
   html.css('top',  init(_plan.position.top, '10') * $('.div_displayObject').height() / 100);
   html.css('left', init(_plan.position.left, '10') * $('.div_displayObject').width() / 100);
-  html.css('transform-origin', '0 0', 'important');
   html.css('transform', 'scale(' + init(_plan.css.zoom, 1) + ')');
-  html.css('-webkit-transform-origin', '0 0');
   html.css('-webkit-transform', 'scale(' + init(_plan.css.zoom, 1) + ')');
-  html.css('-moz-transform-origin', '0 0');
   html.css('-moz-transform', 'scale(' + init(_plan.css.zoom, 1) + ')');
+
+  html.css('transform-origin', '0 0', 'important');
+  html.css('-webkit-transform-origin', '0 0');
+  html.css('-moz-transform-origin', '0 0');
+  html.attr('data-zoom', init(_plan.css.zoom, 1))
   html.addClass('noResize');
-  if (isset(_plan.display) && isset(_plan.display.width)) {
-    html.css('width', init(_plan.display.width, 50));
-  }
-  if (isset(_plan.display) && isset(_plan.display.height)) {
-    html.css('height', init(_plan.display.height, 50));
+  if(_plan.link_type != 'cmd'){
+    if (isset(_plan.display) && isset(_plan.display.width)) {
+      html.css('width', init(_plan.display.width, 50));
+    }
+    if (isset(_plan.display) && isset(_plan.display.height)) {
+      html.css('height', init(_plan.display.height, 50));
+    }
   }
   for (var key in _plan.css) {
-    if (_plan.css[key] != '' && key != 'zoom' && key != 'color' && key != 'rotate' && key != 'background-color') {
-      if(key == 'z-index' && _plan.css[key] < 999){
-        continue;
-      }
-      html.css(key, _plan.css[key]);
-    }else if (_plan.link_type == 'text' || _plan.link_type == 'graph' || _plan.link_type == 'plan' || _plan.link_type == 'view' || _plan.link_type == 'eqLogic') {
-      if (key == 'background-color' && (!isset(_plan.display) || !isset(_plan.display['background-defaut']) || _plan.display['background-defaut'] != 1)) {
-        if (isset(_plan.display) && isset(_plan.display['background-transparent']) && _plan.display['background-transparent'] == 1) {
+    if (_plan.css[key] === '' || key == 'zoom' || key == 'rotate'){
+      continue;
+    }
+    if(key == 'z-index' && _plan.css[key] < 999){
+      continue;
+    }
+    if (key == 'background-color') {
+      if(isset(_plan.display) && (!isset(_plan.display['background-defaut']) || _plan.display['background-defaut'] != 1)){
+        if (isset(_plan.display['background-transparent']) && _plan.display['background-transparent'] == 1) {
           html.style('background-color', 'transparent', 'important');
           html.style('border-radius', '0px', 'important');
-          html.style('box-shadow', 'none', 'important');
+          html.style('box-shadow', 'none');
           if(_plan.link_type == 'eqLogic'){
             html.find('.widget-name').style('background-color', 'transparent', 'important');
+            html.find('.widget-name a').style('color','rgb(90, 90, 90)','important');
           }
         }else{
           html.style(key, _plan.css[key], 'important');
         }
-      }else if (key == 'color' && (!isset(_plan.display) || !isset(_plan.display['color-defaut']) || _plan.display['color-defaut'] != 1)) {
+      }
+      continue;
+    }else if (key == 'color') {
+      if(!isset(_plan.display) || !isset(_plan.display['color-defaut']) || _plan.display['color-defaut'] != 1){
         html.style(key, _plan.css[key], 'important');
+        if(_plan.link_type == 'eqLogic' || _plan.link_type == 'cmd' || _plan.link_type == 'summary'){
+          html.find('*').each(function(){
+            $(this).style(key, _plan.css[key], 'important')
+          });
+        }
+      }
+      continue;
+    }
+    if (key == 'opacity'){
+      continue;
+    }
+    html.style(key, _plan.css[key], 'important');
+  }
+  if (_plan.css['opacity'] && _plan.css['opacity'] !== ''){
+    html.style('background-color',html.css('background-color').replace(')', ','+_plan.css['opacity']+')').replace('rgb', 'rgba'), 'important');
+  }
+  if(_plan.link_type == 'eqLogic'){
+    if(isset(_plan.display.hideName) && _plan.display.hideName == 1){
+      html.find('.widget-name').remove();
+    }
+    if(isset(_plan.display.cmdHide)){
+      for(var i in _plan.display.cmdHide){
+        if(_plan.display.cmdHide[i] == 0){
+          continue;
+        }
+        html.find('.cmd[data-cmd_id='+i+']').remove();
       }
     }
+    if(isset(_plan.display.cmdHideName)){
+      for(var i in _plan.display.cmdHideName){
+        if(_plan.display.cmdHideName[i] == 0){
+          continue;
+        }
+        html.find('.cmd[data-cmd_id='+i+'] .cmdName').remove();
+        html.find('.cmd[data-cmd_id='+i+'] .title').remove();
+      }
+    }
+    if(isset(_plan.display.cmdTransparentBackground)){
+      for(var i in _plan.display.cmdTransparentBackground){
+        if(_plan.display.cmdTransparentBackground[i] == 0){
+          continue;
+        }
+        html.find('.cmd[data-cmd_id='+i+']').style('background-color', 'transparent', 'important');
+        html.find('.cmd[data-cmd_id='+i+']').style('border-radius', '0px', 'important');
+        html.find('.cmd[data-cmd_id='+i+']').style('box-shadow', 'none');
+      }
+    }
+    html.css('min-width','0px');
+    html.css('min-height','0px');
+    html.find('*').css('min-width','0px');
+    html.find('*').css('min-height','0px');
+  }
+  if(_plan.link_type == 'cmd'){
+    var insideHtml = html.html();
+    html = html.empty().append('<center>'+insideHtml+'</center>');
+    html.css('width','').css('min-width','0px');
+    html.css('height','').css('min-height','0px');
+    if(isset(_plan.display.hideName) && _plan.display.hideName == 1){
+      html.find('.cmdName').remove();
+      html.find('.title').remove();
+    }
+  }
+  if(_plan.link_type == 'image'){
+    if(isset(_plan.display.allowZoom) && _plan.display.allowZoom == 1){
+      html.find('.directDisplay').addClass('zoom cursor');
+    }
+  }
+  if(_plan.display.css && _plan.display.css != ''){
+    html.attr('style',html.attr('style')+';'+_plan.display.css);
   }
   if(_plan.link_type == 'graph'){
     $('.div_displayObject').append(html);

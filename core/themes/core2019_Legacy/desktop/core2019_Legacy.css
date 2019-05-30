@@ -121,7 +121,7 @@ span.cursor > i:hover {
 .eqLogic.eqLogic-widget .state,
 .scenario-widget .state,
 .eqLogic.eqLogic-widget p.state,
-.eqLogic.eqLogic-widget .iconCmd > i,
+.eqLogic.eqLogic-widget .iconCmd > i:not([class*="icon_"]),
 .eqLogic.eqLogic-widget .cmd,
 .eqLogic.eqLogic-widget .cmd-widget > center,
 .eqLogic.eqLogic-widget .cmd-widget .history {
@@ -146,12 +146,25 @@ span.cursor > i:hover {
   color: var(--linkHoverLight-color) !important;
 }
 
+div.cmd-widget div[class^="content"] {
+  color: var(--linkHoverLight-color) !important;
+}
+
 #bt_resetDashboardSearch,
 #bt_editDashboardWidgetOrder,
 #bt_displayObject {
   color: var(--txt-color) !important;
   background-color: var(--form-bg-color) !important;
 }
+
+.scenario-widget .iconCmd,
+.eqLogic-widget .iconCmd,
+.eqLogic-widget .cmdName,
+.eqLogic-widget .cmdStats,
+.eqLogic-widget .state {
+  color: var(--sc-lightTxt-color) !important;
+}
+
 
 /* analyse equipment */
 #battery .eqLogic-widget {
@@ -187,6 +200,9 @@ div[data-subtype=select] select {
 .vgauge-value,
 .shuttergauge-value{
   background: var(--linkHoverLight-color) !important;
+}
+.state.valueshutter strong {
+  color: var(--link-color) !important;
 }
 
 .highcharts-data-label > span > span {

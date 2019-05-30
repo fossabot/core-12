@@ -196,6 +196,16 @@ class repo_market {
 	
 	/*     * ***********************BACKUP*************************** */
 	
+	public static function backup_install(){
+		if (exec('which duplicity | wc -l') == 0) {
+			try {
+				com_shell::execute('sudo apt-get -y install duplicity');
+			} catch (\Exception $e) {
+				
+			}
+		}
+	}
+	
 	public static function backup_createFolderIsNotExist() {
 		$client = new Sabre\DAV\Client(array(
 			'baseUri' => 'https://' . config::byKey('market::backupServer'),
@@ -227,6 +237,7 @@ class repo_market {
 			throw new Exception(__('Vous devez obligatoirement avoir un mot de passe pour le backup cloud', __FILE__));
 		}
 		self::backup_createFolderIsNotExist();
+		self::backup_install();
 		$base_dir = realpath(__DIR__ . '/../../');
 		if(!file_exists($base_dir . '/tmp')){
 			mkdir($base_dir . '/tmp');
@@ -269,7 +280,7 @@ class repo_market {
 			}
 			system::kill('duplicity');
 			shell_exec(system::getCmdSudo() . ' rm -rf '.$base_dir . '/tmp/duplicity*');
-			shell_exec(system::getCmdSudo() . ' rm -rf ~/.cache/duplicity/*');
+			shell_exec(system::getCmdSudo() . ' rm -rf ~/.cache/duplicity');
 			com_shell::execute($cmd);
 		}
 	}
@@ -288,6 +299,7 @@ class repo_market {
 		if (config::byKey('market::cloud::backup::password') == '') {
 			return;
 		}
+		self::backup_install();
 		shell_exec(system::getCmdSudo() . ' rm -rf /tmp/duplicity-*-tempdir');
 		if ($_nb == null) {
 			$_nb = 0;
@@ -309,9 +321,9 @@ class repo_market {
 			com_shell::execute($cmd);
 		} catch (Exception $e) {
 			if (self::backup_errorAnalyzed($e->getMessage()) != null) {
-				throw new Exception('[restore cloud] ' . self::backup_errorAnalyzed($e->getMessage()));
+				throw new Exception('[backup clean] ' . self::backup_errorAnalyzed($e->getMessage()));
 			}
-			throw new Exception('[restore cloud] ' . $e->getMessage());
+			throw new Exception('[backup clean] ' . $e->getMessage());
 		}
 	}
 	
@@ -323,6 +335,7 @@ class repo_market {
 			return array();
 		}
 		self::backup_createFolderIsNotExist();
+		self::backup_install();
 		$return = array();
 		$cmd = system::getCmdSudo();
 		$cmd .= ' duplicity collection-status';
@@ -334,7 +347,7 @@ class repo_market {
 		try {
 			$results = explode("\n", com_shell::execute($cmd));
 		} catch (\Exception $e) {
-			shell_exec(system::getCmdSudo() . ' rm -rf ~/.cache/duplicity/*');
+			shell_exec(system::getCmdSudo() . ' rm -rf ~/.cache/duplicity');
 			$results = explode("\n", com_shell::execute($cmd));
 		}
 		foreach ($results as $line) {
@@ -358,7 +371,14 @@ class repo_market {
 		if (file_exists($restore_dir)) {
 			com_shell::execute(system::getCmdSudo() . ' rm -rf ' . $restore_dir);
 		}
-		$base_dir = realpath(__DIR__ . '/../../');
+		self::backup_install();
+		$base_dir =  '/usr/jeedom_duplicity';
+		if(!file_exists($base_dir)){
+			mkdir($base_dir);
+		}
+		if(!file_exists($base_dir)){
+			com_shell::execute(system::getCmdSudo() . ' mkdir ' . $base_dir.';'.system::getCmdSudo() .'chmod 777 -R '.$base_dir);
+		}
 		mkdir($restore_dir);
 		$timestamp = strtotime(trim(str_replace(array('Full', 'Incremental'), '', $_backup)));
 		$backup_name = str_replace(' ', '_', 'backup-cloud-' . config::byKey('market::cloud::backup::name') . '-' . date("Y-m-d-H\hi", $timestamp) . '.tar.gz');
@@ -366,7 +386,7 @@ class repo_market {
 		$cmd .= ' duplicity --file-to-restore /';
 		$cmd .= ' --time ' . $timestamp;
 		$cmd .= ' --num-retries 1';
-		$cmd .= ' --tempdir '.$base_dir . '/tmp';
+		$cmd .= ' --tempdir '.$base_dir;
 		$cmd .= ' "webdavs://' . config::byKey('market::username') . ':' . config::byKey('market::backupPassword');
 		$cmd .= '@' . config::byKey('market::backupServer') . '/remote.php/webdav/' . config::byKey('market::cloud::backup::name').'"';
 		$cmd .= ' ' . $restore_dir;
@@ -378,7 +398,7 @@ class repo_market {
 			}
 			throw new Exception('[restore cloud] ' . $e->getMessage());
 		}
-		return;
+		shell_exec(system::getCmdSudo() . ' rm -rf '.$base_dir);
 		system('cd ' . $restore_dir . ';tar cfz "' . $backup_dir . '/' . $backup_name . '" . > /dev/null');
 		if (file_exists($restore_dir)) {
 			com_shell::execute(system::getCmdSudo() . ' rm -rf ' . $restore_dir);
@@ -749,6 +769,10 @@ class repo_market {
 			}
 			if (isset($_result['register::dnsNumber']) && config::byKey('dns::number') != $_result['register::dnsNumber']) {
 				config::save('dns::number', $_result['register::dnsNumber']);
+				$restart_dns = true;
+			}
+			if (isset($_result['register::vpnurl']) && config::byKey('dns::vpnurl') != $_result['register::vpnurl']) {
+				config::save('dns::vpnurl', $_result['register::vpnurl']);
 				$restart_dns = true;
 			}
 			if (isset($_result['register::vpnPort']) && config::byKey('vpn::port') != $_result['register::vpnPort']) {

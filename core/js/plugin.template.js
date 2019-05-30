@@ -13,43 +13,6 @@
 * You should have received a copy of the GNU General Public License
 * along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
 */
-var changeLeftMenuObjectOrEqLogicName = false;
-
-
-if((!isset(userProfils.doNotAutoHideMenu) || userProfils.doNotAutoHideMenu != 1) && !jQuery.support.touch && $('.eqLogicThumbnailDisplay').html() != undefined && $('#ul_eqLogic').html() != undefined){
-  $('#div_mainContainer').append('<div style="position : fixed;height:100%;width:15px;top:50px;left:0px;z-index:998;background-color:#f6f6f6;" class="bt_pluginTemplateShowSidebar div_smallSideBar"><i class="fa fa-arrow-circle-o-right" style="color : #b6b6b6;"></i><div>');
-  $('#ul_eqLogic').closest('.bs-sidebar').parent().hide();
-  $('#ul_eqLogic').closest('.bs-sidebar').parent().css('z-index','999');
-  $('#ul_eqLogic').closest('.bs-sidebar').parent().removeClass().addClass('col-xs-2');
-  $('.eqLogicThumbnailDisplay').removeClass().addClass('eqLogicThumbnailDisplay col-xs-12');
-  $('.eqLogic').removeClass('col-xs-10 col-lg-10 col-md-9 col-sm-8 col-lg-9 col-md-8 col-sm-7').addClass('eqLogic col-xs-12');
-
-  $('#ul_eqLogic').closest('.bs-sidebar').parent().on('mouseleave',function(){
-    var timer = setTimeout(function(){
-      $('#ul_eqLogic').closest('.bs-sidebar').parent().hide();
-      $('.bt_pluginTemplateShowSidebar').find('i').show();
-      $('.eqLogicThumbnailDisplay').removeClass().addClass('eqLogicThumbnailDisplay col-xs-12');
-      $('.eqLogic').removeClass('col-xs-10 col-lg-10 col-md-9 col-sm-8 col-lg-9 col-md-8 col-sm-7').addClass('col-xs-12');
-      $('.eqLogicThumbnailContainer').packery();
-    }, 300);
-    $(this).data('timerMouseleave', timer)
-  }).on("mouseenter", function(){
-    clearTimeout($(this).data('timerMouseleave'));
-  });
-
-  $('.bt_pluginTemplateShowSidebar').on('mouseenter',function(){
-    var timer = setTimeout(function(){
-      $('.eqLogicThumbnailDisplay').removeClass().addClass('eqLogicThumbnailDisplay col-xs-10');
-      $('.bt_pluginTemplateShowSidebar').find('i').hide();
-      $('.eqLogic').removeClass('col-xs-12').addClass('eqLogic col-xs-10');
-      $('#ul_eqLogic').closest('.bs-sidebar').parent().show();
-      $('.eqLogicThumbnailContainer').packery();
-    }, 100);
-    $(this).data('timerMouseleave', timer)
-  }).off('mouseleave').on("mouseleave", function(){
-    clearTimeout($(this).data('timerMouseleave'));
-  });
-}
 
 //contextMenu
 $(function(){
@@ -77,12 +40,10 @@ $(function(){
         eqsGroups = Array.from(new Set(eqsGroups))
         eqsGroups.sort()
         eqsList = []
-        for(i=0; i<eqsGroups.length; i++)
-        {
+        for(i=0; i<eqsGroups.length; i++){
           group = eqsGroups[i]
           eqsList[group] = []
-          for(j=0; j<_eqs.length; j++)
-          {
+          for(j=0; j<_eqs.length; j++){
             eq = _eqs[j]
             humanName = eq.humanName
             humanCut = humanName.split(']')
@@ -105,9 +66,7 @@ $(function(){
           }
           contextmenuitems[group] = {'name':group, 'items':items}
         }
-
-        if (Object.entries(contextmenuitems).length > 0 && contextmenuitems.constructor === Object)
-        {
+        if (Object.entries(contextmenuitems).length > 0 && contextmenuitems.constructor === Object){
           $('.nav.nav-tabs').contextMenu({
             selector: 'li',
             autoHide: true,
@@ -117,7 +76,11 @@ $(function(){
               tab = null
               if (document.location.toString().match('#')) {
                 tab = '#' + document.location.toString().split('#')[1];
-                tab = $('a[href="' + tab + '"]')
+                if (tab != '#') {
+                  tab = $('a[href="' + tab + '"]')
+                } else {
+                  tab = null
+                }
               }
               $('.eqLogicDisplayCard[data-eqLogic_id="' + key + '"]').click()
               if (tab) tab.click()
@@ -125,39 +88,38 @@ $(function(){
             items: contextmenuitems
           })
         }
-
+        
       }
     })
+  }catch(err) {
+    console.log(err)
   }
-  catch(err) { console.log(err)}
 })
 
-var url = document.location.toString();
-if (url.match('#')) {
-  if(url.split('#')[1] == ''){
-    $('.nav-tabs a:not(.eqLogicAction):first').click();
-  }else{
-    $('.nav-tabs a[href="#' + url.split('#')[1] + '"]').click();
-  }
-}else{
-  $('.nav-tabs a:not(.eqLogicAction):first').click();
-}
-$('.nav-tabs a').on('shown.bs.tab', function (e) {
-  window.location.hash = e.target.hash;
-})
+$('.nav-tabs a:not(.eqLogicAction)').first().click();
 
 $('.eqLogicAction[data-action=gotoPluginConf]').on('click', function () {
   $('#md_modal').dialog({title: "{{Configuration du plugin}}"});
   $("#md_modal").load('index.php?v=d&p=plugin&ajax=1&id='+eqType).dialog('open');
 });
 
-$('.eqLogicAction[data-action=returnToThumbnailDisplay]').on('click', function () {
+$('.eqLogicAction[data-action=returnToThumbnailDisplay]').removeAttr('href').off('click').on('click', function (event) {
+  setTimeout(function(){
+    $('.nav li.active').removeClass('active');
+    $('a[href="#'+$('.tab-pane.active').attr('id')+'"]').closest('li').addClass('active')
+  },500);
+  if (modifyWithoutSave) {
+    if (!confirm('{{Attention vous quittez une page ayant des données modifiées non sauvegardées. Voulez-vous continuer ?}}')) {
+      return;
+    }
+    modifyWithoutSave = false;
+  }
   $('.eqLogic').hide();
   $('.eqLogicThumbnailDisplay').show();
-  $('.li_eqLogic').removeClass('active');
+  $(this).closest('ul').find('li').removeClass('active');
   $('.eqLogicThumbnailContainer').packery();
+  addOrUpdateUrl('id',null,);
 });
-
 
 $(".li_eqLogic,.eqLogicDisplayCard").on('click', function () {
   jeedom.eqLogic.cache.getCmd = Array();
@@ -180,7 +142,7 @@ $(".li_eqLogic,.eqLogicDisplayCard").on('click', function () {
   if($('.li_eqLogic[data-eqLogic_id='+$(this).attr('data-eqLogic_id')+']').html() != undefined){
     $('.li_eqLogic[data-eqLogic_id='+$(this).attr('data-eqLogic_id')+']').addClass('active');
   }
-  $('.nav-tabs a:not(.eqLogicAction):first').click();
+  $('.nav-tabs a:not(.eqLogicAction)').first().click();
   $.showLoading();
   jeedom.eqLogic.print({
     type: isset($(this).attr('data-eqLogic_type')) ? $(this).attr('data-eqLogic_type') : eqType,
@@ -208,25 +170,20 @@ $(".li_eqLogic,.eqLogicDisplayCard").on('click', function () {
       $('body').delegate('.cmd .cmdAttr[data-l1key=type]', 'change', function () {
         jeedom.cmd.changeType($(this).closest('.cmd'));
       });
-
+      
       $('body').delegate('.cmd .cmdAttr[data-l1key=subType]', 'change', function () {
         jeedom.cmd.changeSubType($(this).closest('.cmd'));
       });
-      changeLeftMenuObjectOrEqLogicName = false;
+      addOrUpdateUrl('id',data.id);
       $.hideLoading();
       modifyWithoutSave = false;
+      setTimeout(function(){
+        modifyWithoutSave = false;
+      },1000)
     }
   });
   return false;
 });
-
-if (getUrlVars('saveSuccessFull') == 1) {
-  $('#div_alert').showAlert({message: '{{Sauvegarde effectuée avec succès}}', level: 'success'});
-}
-
-if (getUrlVars('removeSuccessFull') == 1) {
-  $('#div_alert').showAlert({message: '{{Suppression effectuée avec succès}}', level: 'success'});
-}
 
 /**************************EqLogic*********************************************/
 $('.eqLogicAction[data-action=copy]').on('click', function () {
@@ -308,30 +265,23 @@ $('.eqLogicAction[data-action=save]').on('click', function () {
   return false;
 });
 
-$('.eqLogicAttr[data-l1key=name]').on('change', function () {
-  changeLeftMenuObjectOrEqLogicName = true;
-});
-
-$('.eqLogicAttr[data-l1key=object_id]').on('change', function () {
-  changeLeftMenuObjectOrEqLogicName = true;
-});
-
 $('.eqLogicAction[data-action=remove]').on('click', function () {
   if ($('.eqLogicAttr[data-l1key=id]').value() != undefined) {
-
     jeedom.eqLogic.getUseBeforeRemove({
       id: $('.eqLogicAttr[data-l1key=id]').value(),
       error: function (error) {
         $('#div_alert').showAlert({message: error.message, level: 'danger'});
       },
       success: function (data) {
-        console.log(data);
-        var text = '{{Etes-vous sûr de vouloir supprimer l\'équipement}} ' + eqType + ' <b>' + $('.eqLogicAttr[data-l1key=name]').value() + '</b> ?';
-        console.log(Object.keys(data).length)
+        var text = '{{Êtes-vous sûr de vouloir supprimer l\'équipement}} ' + eqType + ' <b>' + $('.eqLogicAttr[data-l1key=name]').value() + '</b> ?';
         if(Object.keys(data).length > 0){
-          text += ' Liée à : ';
+          text += ' </br> Il est utilisé par : </br>';
           for(var i in data){
-            text += data[i].title+' ('+data[i].type+'), ';
+            var complement = '';
+            if ('sourceName' in data[i]) {
+              complement = ' ('+data[i].sourceName+')';
+            }
+            text += '- ' + '<a href="'+data[i].url+'" target="_blank">' +data[i].type +'</a> : <b>'+ data[i].name + '</b>'+ complement+' <sup><a href="'+data[i].url+'" target="_blank"><i class="fas fa-external-link-alt"></i></a></sup></br>';
           }
         }
         text = text.substring(0, text.length - 2)
@@ -397,7 +347,8 @@ $('.eqLogic .eqLogicAction[data-action=configure]').on('click', function () {
 });
 
 $('#in_searchEqlogic').off('keyup').keyup(function () {
-  var search = $(this).value();
+  var search = $(this).value().toLowerCase();
+  search = search.normalize('NFD').replace(/[\u0300-\u036f]/g, "")
   if(search == ''){
     $('.eqLogicDisplayCard').show();
     $('.eqLogicThumbnailContainer').packery();
@@ -406,8 +357,8 @@ $('#in_searchEqlogic').off('keyup').keyup(function () {
   $('.eqLogicDisplayCard').hide();
   $('.eqLogicDisplayCard .name').each(function(){
     var text = $(this).text().toLowerCase();
-    if(text.indexOf(search.toLowerCase()) >= 0){
-      $(this)
+    text = text.normalize('NFD').replace(/[\u0300-\u036f]/g, "")
+    if(text.indexOf(search) >= 0){
       $(this).closest('.eqLogicDisplayCard').show();
     }
   });
@@ -416,16 +367,16 @@ $('#in_searchEqlogic').off('keyup').keyup(function () {
 
 /**************************CMD*********************************************/
 $('.cmdAction[data-action=add]').on('click', function () {
-  modifyWithoutSave = true;
   addCmdToTable();
   $('.cmd:last .cmdAttr[data-l1key=type]').trigger('change');
+  modifyWithoutSave = true;
 });
 
 $('#div_pageContainer').on( 'click', '.cmd .cmdAction[data-l1key=chooseIcon]',function () {
-  modifyWithoutSave = true;
   var cmd = $(this).closest('.cmd');
   chooseIcon(function (_icon) {
     cmd.find('.cmdAttr[data-l1key=display][data-l2key=icon]').empty().append(_icon);
+    modifyWithoutSave = true;
   });
 });
 
@@ -454,7 +405,7 @@ $('#div_pageContainer').on( 'click','.cmd .cmdAction[data-action=test]',function
   } else {
     $('#div_alert').showAlert({message: '{{Veuillez activer l\'équipement avant de tester une de ses commandes}}', level: 'warning'});
   }
-
+  
 });
 
 $('#div_pageContainer').on( 'dblclick','.cmd input,select,span,a', function (event) {
@@ -479,11 +430,11 @@ if (is_numeric(getUrlVars('id'))) {
   } else if ($('.eqLogicThumbnailContainer .eqLogicDisplayCard[data-eqLogic_id=' + getUrlVars('id') + ']').length != 0) {
     $('.eqLogicThumbnailContainer .eqLogicDisplayCard[data-eqLogic_id=' + getUrlVars('id') + ']').click();
   } else  if ($('.eqLogicThumbnailDisplay').html() == undefined) {
-    $('#ul_eqLogic .li_eqLogic:first').click();
+    $('#ul_eqLogic .li_eqLogic').first().click();
   }
 } else {
   if ($('.eqLogicThumbnailDisplay').html() == undefined) {
-    $('#ul_eqLogic .li_eqLogic:first').click();
+    $('#ul_eqLogic .li_eqLogic').first().click();
   }
 }
 
@@ -548,10 +499,10 @@ $("img.lazy").each(function () {
   }
 });
 
-$('body').delegate('.cmdAttr', 'change', function () {
+$('#div_pageContainer').delegate('.cmd .cmdAttr:visible', 'change', function () {
   modifyWithoutSave = true;
 });
 
-$('body').delegate('.eqLogicAttr', 'change', function () {
+$('#div_pageContainer').delegate('.eqLogic .eqLogicAttr:visible', 'change', function () {
   modifyWithoutSave = true;
 });

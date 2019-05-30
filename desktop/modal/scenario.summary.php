@@ -34,6 +34,11 @@ if (!isConnect()) {
 <script>
 initTableSorter();
 refreshScenarioSummary();
+$('#table_scenarioSummary')[0].config.widgetOptions.resizable_widths = ['40px', '', '60px', '', '50px', '60px', '130px', '130px', '', '80px', '60px'];
+$('#table_scenarioSummary').trigger('applyWidgets');
+$('#table_scenarioSummary').trigger('resizableReset');
+$('#table_scenarioSummary').trigger('sorton', [[[1,0]]]);
+
 
 $('#bt_refreshSummaryScenario').off().on('click',function(){
 	refreshScenarioSummary();
@@ -51,7 +56,7 @@ function refreshScenarioSummary(){
 			for(var i in data){
 				var tr = '<tr class="scenario" data-id="' + init(data[i].id) + '">';
 				tr += '<td>';
-				tr += '<span class="scenarioAttr" data-l1key="id"></span>';
+				tr += '<span class="label label-info scenarioAttr" data-l1key="id"></span>';
 				tr += '</td>';
 				tr += '<td>';
 				tr += '<span class="scenarioAttr cursor bt_summaryGotoScenario" data-l1key="humanName"></span>';

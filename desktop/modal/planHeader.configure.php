@@ -30,6 +30,12 @@ sendVarToJS('planHeader', utils::o2a($planHeader));
 						</div>
 					</div>
 					<div class="form-group">
+						<label class="col-lg-4 control-label">{{Position}}</label>
+						<div class="col-lg-2">
+							<input type="number" class="planHeaderAttr form-control" data-l1key="order" min="0" />
+						</div>
+					</div>
+					<div class="form-group">
 						<label class="col-lg-4 control-label">{{Fond transparent}}</label>
 						<div class="col-lg-2">
 							<input type="checkbox" class="planHeaderAttr" data-l1key="configuration" data-l2key="backgroundTransparent" />
@@ -44,7 +50,7 @@ sendVarToJS('planHeader', utils::o2a($planHeader));
 					<div class="form-group">
 						<label class="col-lg-4 control-label">{{Code d'accès}}</label>
 						<div class="col-lg-2">
-							<input type="password" class="planHeaderAttr form-control" data-l1key="configuration" data-l2key="accessCode" />
+							<input type="password" autocomplete="new-password"  class="planHeaderAttr form-control" data-l1key="configuration" data-l2key="accessCode" />
 						</div>
 					</div>
 					<div class="form-group">
@@ -112,11 +118,15 @@ sendVarToJS('planHeader', utils::o2a($planHeader));
 							$link = $plan->	getLink();
 							if(is_object($link)){
 								echo $link->getHumanName();
+							}else{
+								echo '<span class="label label-danger">{{Lien mort ou absent}}</span>';
 							}
 							echo '</td>';
 							echo '<td>';
 							echo '<a class="btn btn-danger btn-xs bt_removePlanComposant pull-right"><i class="fas fa-trash"></i> {{Supprimer}}</a> ';
-							echo '<a class="btn btn-default btn-xs bt_configurePlanComposant pull-right"><i class="fas fa-gear"></i> {{Configuration}}</a>';
+							if(is_object($link)){
+								echo '<a class="btn btn-default btn-xs bt_configurePlanComposant pull-right"><i class="fas fa-cog"></i> {{Configuration}}</a>';
+							}
 							echo '</td>';
 							echo '</tr>';
 						}

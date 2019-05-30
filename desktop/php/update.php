@@ -8,7 +8,7 @@ if (!isConnect('admin')) {
 <span class="label label-info" id="span_lastUpdateCheck"></span>
 <div class="input-group pull-right" style="display:inline-flex">
 	<span class="input-group-btn">
-		<a href="#" class="btn btn-sm roundedLeft" id="bt_updateJeedom"><i class="fas fa-check"></i> {{Mettre à jour}}</a><a class="btn btn-info btn-sm" id="bt_checkAllUpdate"><i class="fas fa-sync"></i> {{Vérifier les mises à jour}}</a><a class="btn btn-success btn-sm roundedRight" id="bt_saveUpdate"><i class="far fa-check-circle"></i> {{Sauvegarder}}</a>
+		<a href="#" class="btn btn-sm btn-warning roundedLeft" id="bt_updateJeedom"><i class="fas fa-check"></i> {{Mettre à jour}}</a><a class="btn btn-info btn-sm" id="bt_checkAllUpdate"><i class="fas fa-sync"></i> {{Vérifier les mises à jour}}</a><a class="btn btn-success btn-sm roundedRight" id="bt_saveUpdate"><i class="far fa-check-circle"></i> {{Sauvegarder}}</a>
 	</span>
 </div>
 <br/><br/>
@@ -16,7 +16,7 @@ if (!isConnect('admin')) {
 <ul class="nav nav-tabs" role="tablist">
 	<li role="presentation" class="active"><a href="#coreplugin" aria-controls="home" role="tab" data-toggle="tab"><i class="fas fa-archive"></i> {{Core et plugins}}</a></li>
 	<li role="presentation"><a href="#other" aria-controls="profile" role="tab" data-toggle="tab"><i class="fas fa-feather"></i> {{Autres}}</a></li>
-	<li role="presentation"><a href="#log" aria-controls="profile" role="tab" data-toggle="tab"><i class="fas fa-file"></i> {{Logs}}</a></li>
+	<li role="presentation"><a href="#log" aria-controls="profile" role="tab" data-toggle="tab"><i class="fas fa-info"></i> {{Informations}}</a></li>
 </ul>
 
 <div class="tab-content">
@@ -25,9 +25,9 @@ if (!isConnect('admin')) {
 			<thead>
 				<tr>
 					<th data-sorter="false" style="width:50px;"></th>
-					<th data-sorter="false">{{Nom}}</th>
-					<th data-sorter="false" data-filter="false">{{Version installée}}</th>
-					<th data-sorter="false" data-filter="false">{{Dernière version}}</th>
+					<th>{{Nom}}</th>
+					<th data-sorter="shortDate">{{Version installée}}</th>
+					<th data-sorter="shortDate">{{Dernière version}}</th>
 					<th data-sorter="checkbox" data-filter="false">{{Options}}</th>
 					<th data-sorter="false" data-filter="false">{{Actions}}</th>
 				</tr>
@@ -41,10 +41,10 @@ if (!isConnect('admin')) {
 			<thead>
 				<tr>
 					<th data-sorter="false" style="width:50px;"></th>
-					<th data-sorter="false">{{Nom}}</th>
-					<th data-sorter="false" data-filter="false">{{Version installée}}</th>
-					<th data-sorter="false" data-filter="false">{{Dernière version}}</th>
-					<th data-sorter="false" data-filter="false">{{Options}}</th>
+					<th>{{Nom}}</th>
+					<th data-sorter="shortDate" data-filter="false">{{Version installée}}</th>
+					<th data-sorter="shortDate" data-filter="false">{{Dernière version}}</th>
+					<th data-sorter="checkbox" data-filter="false">{{Options}}</th>
 					<th data-sorter="false" data-filter="false">{{Actions}}</th>
 				</tr>
 			</thead>
@@ -52,19 +52,36 @@ if (!isConnect('admin')) {
 			</tbody>
 		</table>
 	</div>
-	<div role="tabpanel" class="tab-pane" id="log">
-		<legend style="cursor:default;"><i class="fas fa-info-circle"></i>  {{Informations :}}</legend>
-		<pre id="pre_updateInfo"></pre>
+	<div role="tabpanel" class="tab-pane" id="log" style="overflow:auto;overflow-x: hidden">
+		<br/>
+		<div class="row">
+			<div class="col-sm-12 progressbarContainer" style="display: inline-flex;">
+				<div class="progress" style="width:calc(100% - 38px);height:22px;">
+					<div class="progress-bar progress-bar-striped" id="div_progressbar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="min-width: 2em;font-size:18px;">
+						N/A
+					</div>
+				</div>
+				<a class="btn btn-xs btn-info" style="width:35px;margin-left: 7px;" id="bt_showHideLog" title="{{Afficher le log d'update}}"><i class="fas fa-file"></i></a>
+			</div>
+		</div>
+		<div id="div_log" style="display:none; height:calc(100% - 45px)">
+			<legend style="cursor:default; width:calc(100% - 50px);"><i class="fas fa-info-circle"></i>  {{Log :}}</legend>
+			<pre id="pre_updateInfo"></pre>
+		</div>
 	</div>
 </div>
 
 <div id="md_specifyUpdate" style="overflow-x: hidden;">
 	<form class="form-horizontal">
 		<fieldset>
-			<div class="alert alert-danger">{{Avant toute mise à jour, merci de consulter la note de version du core de Jeedom}} <a target="_blank" href="https://jeedom.github.io/core/fr_FR/noteVersion">{{ici}}</a></div>
+			<div class="alert alert-danger">
+				{{Avant toute mise à jour, merci de consulter}} <a class="warning" style="color:var(--al-warning-color)!important" target="_blank" href="https://jeedom.github.io/core/fr_FR/noteVersion">{{la note de version}}</a> {{du core de Jeedom}}.
+			</div>
 			<div class="form-group">
 				<div class="form-group">
-					<label class="col-xs-6 control-label">{{Pré-update (mettre à jour le script d'update avant)}}</label>
+					<label class="col-xs-6 control-label">{{Pré-update}}
+						<sup><i class="fas fa-question-circle tooltips" title="{{Mettre d'abord le script d'update à jour.}}"></i></sup>
+					</label>
 					<div class="col-xs-4">
 						<input type="checkbox" class="updateOption" data-l1key="preUpdate" />
 					</div>
@@ -88,32 +105,34 @@ if (!isConnect('admin')) {
 					</div>
 				</div>
 				<div class="form-group">
-					<label class="col-xs-6 control-label">{{Mode forcé}}</label>
+					<label class="col-xs-6 control-label">{{Mode forcé}}
+						<sup><i class="fas fa-question-circle tooltips" title="{{Continuer la mise à jour en cas d'erreur.}}"></i></sup>
+					</label>
 					<div class="col-xs-4">
 						<input type="checkbox" class="updateOption" data-l1key="force" />
 					</div>
 				</div>
 			</div>
 			<div class="alert alert-danger">{{L'option suivante n'est à modifier que sur demande du support sinon il faut ABSOLUMENT qu'elle soit sur "Aucune"}}</div>
-				<div class="form-group has-error">
-					<label class="col-xs-6 control-label ">{{Mise à jour à réappliquer}}</label>
-					<div class="col-xs-5">
-						<select id="sel_updateVersion" class="form-control updateOption" data-l1key="update::reapply">
-							<option value="">{{Aucune}}</option>
-							<?php
-							$updates = array();
-							foreach (update::listCoreUpdate() as $udpate) {
-								$updates[str_replace(array('.php', '.sql'), '', $udpate)] = str_replace(array('.php', '.sql'), '', $udpate);
-							}
-							usort($updates, 'version_compare');
-							$updates = array_reverse($updates);
-							foreach ($updates as $value) {
-								echo '<option value="' . $value . '">' . $value . '</option>';
-							}
-							?>
-						</select>
-					</div>
+			<div class="form-group has-error">
+				<label class="col-xs-6 control-label ">{{Mise à jour à réappliquer}}</label>
+				<div class="col-xs-5">
+					<select id="sel_updateVersion" class="form-control updateOption" data-l1key="update::reapply">
+						<option value="">{{Aucune}}</option>
+						<?php
+						$updates = array();
+						foreach (update::listCoreUpdate() as $udpate) {
+							$updates[str_replace(array('.php', '.sql'), '', $udpate)] = str_replace(array('.php', '.sql'), '', $udpate);
+						}
+						usort($updates, 'version_compare');
+						$updates = array_reverse($updates);
+						foreach ($updates as $value) {
+							echo '<option value="' . $value . '">' . $value . '</option>';
+						}
+						?>
+					</select>
 				</div>
+			</div>
 		</fieldset>
 	</form>
 	<a class="btn btn-success pull-right" style="color:white;" id="bt_doUpdate"><i class="fas fa-check"></i> {{Mettre à jour}}</a>

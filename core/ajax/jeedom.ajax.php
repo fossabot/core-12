@@ -223,8 +223,8 @@ try {
 		if (!in_array($extension, array('.gz'))) {
 			throw new Exception('Extension du fichier non valide (autorisé .tar.gz) : ' . $extension);
 		}
-		if (filesize($_FILES['file']['tmp_name']) > 300000000) {
-			throw new Exception(__('Le fichier est trop gros (maximum 300Mo)', __FILE__));
+		if (filesize($_FILES['file']['tmp_name']) > 1000000000) {
+			throw new Exception(__('Le fichier est trop gros (maximum 1Go)', __FILE__));
 		}
 		if (!move_uploaded_file($_FILES['file']['tmp_name'], $uploaddir . '/' . $_FILES['file']['name'])) {
 			throw new Exception(__('Impossible de déplacer le fichier temporaire', __FILE__));
@@ -243,6 +243,16 @@ try {
 	if (init('action') == 'rebootSystem') {
 		unautorizedInDemo();
 		ajax::success(jeedom::rebootSystem());
+	}
+	
+	if (init('action') == 'cleanFileSystemRight') {
+		unautorizedInDemo();
+		ajax::success(jeedom::cleanFileSytemRight());
+	}
+	
+	if (init('action') == 'consistency') {
+		unautorizedInDemo();
+		ajax::success(jeedom::consistency());
 	}
 	
 	if (init('action') == 'forceSyncHour') {
@@ -315,7 +325,7 @@ try {
 	if (init('action') == 'getFileContent') {
 		unautorizedInDemo();
 		$pathinfo = pathinfo(init('path'));
-		if (!in_array($pathinfo['extension'], array('php', 'js', 'json', 'sql', 'ini','html','py','css'))) {
+		if (!in_array($pathinfo['extension'], array('php', 'js', 'json', 'sql', 'ini','html','py','css','html'))) {
 			throw new Exception(__('Vous ne pouvez éditer ce type d\'extension : ' . $pathinfo['extension'], __FILE__));
 		}
 		ajax::success(file_get_contents(init('path')));
@@ -324,7 +334,7 @@ try {
 	if (init('action') == 'setFileContent') {
 		unautorizedInDemo();
 		$pathinfo = pathinfo(init('path'));
-		if (!in_array($pathinfo['extension'], array('php', 'js', 'json', 'sql', 'ini','html','py','css'))) {
+		if (!in_array($pathinfo['extension'], array('php', 'js', 'json', 'sql', 'ini','html','py','css','html'))) {
 			throw new Exception(__('Vous ne pouvez éditer ce type d\'extension : ' . $pathinfo['extension'], __FILE__));
 		}
 		ajax::success(file_put_contents(init('path'), init('content')));
@@ -333,7 +343,7 @@ try {
 	if (init('action') == 'deleteFile') {
 		unautorizedInDemo();
 		$pathinfo = pathinfo(init('path'));
-		if (!in_array($pathinfo['extension'], array('php', 'js', 'json', 'sql', 'ini','css'))) {
+		if (!in_array($pathinfo['extension'], array('php', 'js', 'json', 'sql', 'ini','css','html'))) {
 			throw new Exception(__('Vous ne pouvez éditer ce type d\'extension : ' . $pathinfo['extension'], __FILE__));
 		}
 		ajax::success(unlink(init('path')));
@@ -342,7 +352,7 @@ try {
 	if (init('action') == 'createFile') {
 		unautorizedInDemo();
 		$pathinfo = pathinfo(init('name'));
-		if (!in_array($pathinfo['extension'], array('php', 'js', 'json', 'sql', 'ini','css'))) {
+		if (!in_array($pathinfo['extension'], array('php', 'js', 'json', 'sql', 'ini','css','html'))) {
 			throw new Exception(__('Vous ne pouvez éditer ce type d\'extension : ' . $pathinfo['extension'], __FILE__));
 		}
 		touch(init('path') . init('name'));
@@ -355,6 +365,49 @@ try {
 	if (init('action') == 'emptyRemoveHistory') {
 		unautorizedInDemo();
 		unlink(__DIR__ . '/../../data/remove_history.json');
+		ajax::success();
+	}
+	
+	if (init('action') == 'uploadImageIcon') {
+		if (!isConnect('admin')) {
+			throw new Exception(__('401 - Accès non autorisé', __FILE__));
+		}
+		unautorizedInDemo();
+		if (!isset($_FILES['file'])) {
+			throw new Exception(__('Aucun fichier trouvé. Vérifiez le paramètre PHP (post size limit)', __FILE__));
+		}
+		$extension = strtolower(strrchr($_FILES['file']['name'], '.'));
+		if (!in_array($extension, array('.jpg', '.png'))) {
+			throw new Exception('Extension du fichier non valide (autorisé .jpg .png) : ' . $extension);
+		}
+		if (filesize($_FILES['file']['tmp_name']) > 5000000) {
+			throw new Exception(__('Le fichier est trop gros (maximum 5Mo)', __FILE__));
+		}
+		if(!file_exists(__DIR__ . '/../../data/img')){
+			mkdir(__DIR__ . '/../../data/img');
+		}
+		$filename = $_FILES['file']['name'];
+		$filepath = __DIR__ . '/../../data/img/' . $filename;
+		file_put_contents($filepath,file_get_contents($_FILES['file']['tmp_name']));
+		if(!file_exists($filepath)){
+			throw new \Exception(__('Impossible de sauvegarder l\'image',__FILE__));
+		}
+		ajax::success(array('filepath' => $filepath));
+	}
+	
+	if (init('action') == 'removeImageIcon') {
+		if (!isConnect('admin')) {
+			throw new Exception(__('401 - Accès non autorisé', __FILE__));
+		}
+		unautorizedInDemo();
+		$filepath = __DIR__ . '/../../data/img/' . init('filename');
+		if(!file_exists($filepath)){
+			throw new Exception(__('Fichier introuvable, impossible de le supprimer', __FILE__));
+		}
+		unlink($filepath);
+		if(file_exists($filepath)){
+			throw new Exception(__('Impossible de supprimer le fichier', __FILE__));
+		}
 		ajax::success();
 	}
 	

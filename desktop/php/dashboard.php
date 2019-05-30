@@ -35,14 +35,14 @@ sendVarToJs('rootObjectId', $object->getId());
 	?>
 	<div class="bs-sidebar">
 		<ul id="ul_object" class="nav nav-list bs-sidenav">
-			<li class="filter" style="margin-bottom: 5px;"><input class="filter form-control input-sm" placeholder="{{Rechercher}}" style="width: 100%"/></li>
+			<li class="filter" style="margin-bottom: 5px;"><input class="filter form-control" placeholder="{{Rechercher}}" style="width: 100%"/></li>
 			<?php
 			foreach ($allObject as $object_li) {
 				$margin = 5 * $object_li->getConfiguration('parentNumber');
 				if ($object_li->getId() == $object->getId()) {
-					echo '<li class="cursor li_object active" ><a data-object_id="' . $object_li->getId() . '" data-href="index.php?v=d&p=dashboard&object_id=' . $object_li->getId() . '&category=' . init('category', 'all') . '" style="padding: 2px 0px;"><span style="position:relative;left:' . $margin . 'px;font-size:0.85em;">' . $object_li->getHumanName(true, true) . '</span></a></li>';
+					echo '<li class="cursor li_object active" ><a data-object_id="' . $object_li->getId() . '" data-href="index.php?v=d&p=dashboard&object_id=' . $object_li->getId() . '&category=' . init('category', 'all') . '" style="padding: 2px 0px;"><span style="position:relative;left:' . $margin . 'px;">' . $object_li->getHumanName(true, true) . '</span></a></li>';
 				} else {
-					echo '<li class="cursor li_object" ><a data-object_id="' . $object_li->getId() . '" data-href="index.php?v=d&p=dashboard&object_id=' . $object_li->getId() . '&category=' . init('category', 'all') . '" style="padding: 2px 0px;"><span style="position:relative;left:' . $margin . 'px;font-size:0.85em;">' . $object_li->getHumanName(true, true) . '</span></a></li>';
+					echo '<li class="cursor li_object" ><a data-object_id="' . $object_li->getId() . '" data-href="index.php?v=d&p=dashboard&object_id=' . $object_li->getId() . '&category=' . init('category', 'all') . '" style="padding: 2px 0px;"><span style="position:relative;left:' . $margin . 'px;">' . $object_li->getHumanName(true, true) . '</span></a></li>';
 				}
 			}
 			?>
@@ -68,7 +68,7 @@ if ($_SESSION['user']->getOptions('displayObjetByDefault') == 1) {
 	<?php
 	if (init('category', 'all') == 'all') {?>
 		<div class="input-group-btn">
-			<a id="bt_editDashboardWidgetOrder" data-mode="0" class="btn roundedRight"><i class="fas fa-pencil-alt"></i></a>
+			<a id="bt_editDashboardWidgetOrder" data-mode="0" class="btn roundedRight" title="{{Édition du Dashboard}}"><i class="fas fa-pencil-alt"></i></a>
 		</div>
 	<?php } ?>
 </div>
@@ -82,7 +82,7 @@ if ($_SESSION['user']->getOptions('displayObjetByDefault') == 1) {
 		echo '<div class="col-md-12">';
 	}
 	echo '<div data-object_id="' . $object->getId() . '" data-father_id="' . $object->getFather_id() . '" class="div_object">';
-	echo '<legend><a class="div_object" href="index.php?v=d&p=object&id=' . $object->getId() . '">' . $object->getDisplay('icon') . ' ' . $object->getName() . '</a><span>' . $object->getHtmlSummary() . '</span> <i class="fas fa-compress pull-right cursor bt_editDashboardWidgetAutoResize" id="edit_object_' . $object->getId() . '" data-mode="0" style="display: none;"></i> </legend>';
+	echo '<legend><a class="div_object" href="index.php?v=d&p=object&id=' . $object->getId() . '">' . $object->getDisplay('icon') . ' ' . ucfirst($object->getName()) . '</a><span>' . $object->getHtmlSummary() . '</span> <i class="fas fa-compress pull-right cursor bt_editDashboardWidgetAutoResize" id="edit_object_' . $object->getId() . '" data-mode="0" style="display: none;"></i> </legend>';
 	echo '<div class="div_displayEquipement" id="div_ob' . $object->getId() . '">';
 	echo '<script>getObjectHtml(' . $object->getId() . ')</script>';
 	echo '</div>';

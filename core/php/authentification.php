@@ -123,26 +123,26 @@ function loginByHash($_key) {
 		sleep(5);
 		return false;
 	}
+	$kid = sha512($key[1]);
 	$registerDevice = $user->getOptions('registerDevice', array());
-	if (!isset($registerDevice[sha512($key[1])])) {
+	if (!isset($registerDevice[$kid])) {
 		user::failedLogin();
 		sleep(5);
 		return false;
 	}
-	@session_start();
-	$_SESSION['user'] = $user;
-	@session_write_close();
-	$registerDevice = $_SESSION['user']->getOptions('registerDevice', array());
+	$registerDevice = $user->getOptions('registerDevice', array());
 	if (!is_array($registerDevice)) {
 		$registerDevice = array();
 	}
-	$registerDevice[sha512($key[1])] = array();
-	$registerDevice[sha512($key[1])]['datetime'] = date('Y-m-d H:i:s');
-	$registerDevice[sha512($key[1])]['ip'] = getClientIp();
-	$registerDevice[sha512($key[1])]['session_id'] = session_id();
+	$registerDevice[$kid] = array(
+		'datetime' => date('Y-m-d H:i:s'),
+		'ip' => getClientIp(),
+		'session_id' =>session_id(),
+	);
+	$user->setOptions('registerDevice', $registerDevice);
+	$user->save();
 	@session_start();
-	$_SESSION['user']->setOptions('registerDevice', $registerDevice);
-	$_SESSION['user']->save();
+	$_SESSION['user'] = $user;
 	@session_write_close();
 	if (!isset($_COOKIE['jeedom_token'])) {
 		setcookie('jeedom_token', ajax::getToken(), time() + 365 * 24 * 3600, "/", '', false, true);

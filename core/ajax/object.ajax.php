@@ -279,7 +279,7 @@ try {
 			}
 		}
 		$object->setImage('type', str_replace('.', '', $extension));
-		$object->setImage('sha512', sha512($object->getImage('data')));
+		$object->setImage('sha512', sha512(file_get_contents($_FILES['file']['tmp_name'])));
 		
 		$filename = 'object'.$object->getId().'-'.$object->getImage('sha512') . '.' . $object->getImage('type');
 		$filepath = __DIR__ . '/../../data/object/' . $filename;
@@ -288,7 +288,7 @@ try {
 			throw new \Exception(__('Impossible de sauvegarder l\'image',__FILE__));
 		}
 		$object->save();
-		ajax::success();
+		ajax::success(array('filepath' => $filepath));
 	}
 	
 	throw new Exception(__('Aucune méthode correspondante à : ', __FILE__) . init('action'));

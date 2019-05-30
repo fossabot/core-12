@@ -25,10 +25,9 @@ $(function () {
   MESSAGE_NUMBER = null;
   nbActiveAjaxRequest = 0;
   utid = Date.now();
-  
   $.mobile.orientationChangeEnabled = false;
   
-  $(window).on("orientationchange", function (event) {
+  $(window).on("resize", function (event) {
     deviceInfo = getDeviceType();
   });
   
@@ -48,7 +47,7 @@ $(function () {
   
   $('body').on('taphold','.cmd[data-type=info]',function(){
     $('#bottompanel_mainoption').empty();
-    $('#bottompanel_mainoption').append('<a class="link ui-bottom-sheet-link ui-btn ui-btn-inline waves-effect waves-button" data-page="history" data-title="{{Historique}}" data-option="'+$(this).data('cmd_id')+'"><i class="fas fa-bar-chart"></i> {{Historique}}</a>');
+    $('#bottompanel_mainoption').append('<a class="link ui-bottom-sheet-link ui-btn ui-btn-inline waves-effect waves-button" data-page="history" data-title="{{Historique}}" data-option="'+$(this).data('cmd_id')+'"><i class="fas fa-chart-bar"></i> {{Historique}}</a>');
     $('#bottompanel_mainoption').append('<a class="ui-bottom-sheet-link ui-btn ui-btn-inline waves-effect waves-button" id="bt_warnmeCmd" data-cmd_id="'+$(this).data('cmd_id')+'"><i class="fas fa-bell"></i> {{Préviens moi}}</a>');
     $('#bottompanel_mainoption').panel('open');
   });
@@ -68,7 +67,6 @@ $(function () {
   
   var webappCache = window.applicationCache;
   
-  
   function updateCacheEvent(e) {
     if (webappCache.status == 3) {
       $('#div_updateInProgress').html('<p>Mise à jour de l\'application en cours<br/><span id="span_updateAdvancement">0</span>%</p>');
@@ -86,19 +84,22 @@ $(function () {
     }
   }
   
-  webappCache.addEventListener('cached', updateCacheEvent, false);
-  webappCache.addEventListener('checking', updateCacheEvent, false);
-  webappCache.addEventListener('downloading', updateCacheEvent, false);
-  webappCache.addEventListener('error', updateCacheEvent, false);
-  webappCache.addEventListener('noupdate', updateCacheEvent, false);
-  webappCache.addEventListener('obsolete', updateCacheEvent, false);
-  webappCache.addEventListener('progress', updateCacheEvent, false);
-  webappCache.addEventListener('updateready', updateCacheEvent, false);
-  try{
-    webappCache.update();
-  }catch (e) {
-    
+  if (webappCache != undefined) {
+    webappCache.addEventListener('cached', updateCacheEvent, false);
+    webappCache.addEventListener('checking', updateCacheEvent, false);
+    webappCache.addEventListener('downloading', updateCacheEvent, false);
+    webappCache.addEventListener('error', updateCacheEvent, false);
+    webappCache.addEventListener('noupdate', updateCacheEvent, false);
+    webappCache.addEventListener('obsolete', updateCacheEvent, false);
+    webappCache.addEventListener('progress', updateCacheEvent, false);
+    webappCache.addEventListener('updateready', updateCacheEvent, false);
+    try{
+      webappCache.update();
+    } catch(e) {
+      
+    }
   }
+  
 });
 
 
@@ -260,6 +261,10 @@ function initApplication(_reinit) {
         }
         if(typeof jeedom.theme.theme_changeAccordingTime == undefined){
           jeedom.theme.theme_changeAccordingTime = "0";
+        }
+        $('body').attr('data-coloredIcons',0);
+        if(typeof jeedom.theme['interface::advance::coloredIcons'] != 'undefined' && jeedom.theme['interface::advance::coloredIcons'] == '1'){
+          $('body').attr('data-coloredIcons',1);
         }
         $('#jQMnDColor').attr('href', 'core/themes/'+jeedom.theme.current_mobile_theme+'/mobile/' + jeedom.theme.current_mobile_theme + '.css');
         changeThemeAuto();

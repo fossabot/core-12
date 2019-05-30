@@ -26,6 +26,7 @@ class planHeader {
 	private $name;
 	private $image;
 	private $configuration;
+	private $order;
 	private $_changed = false;
 	
 	/*     * ***********************Méthodes statiques*************************** */
@@ -42,7 +43,8 @@ class planHeader {
 	
 	public static function all() {
 		$sql = 'SELECT ' . DB::buildField(__CLASS__) . '
-		FROM planHeader';
+		FROM planHeader
+		ORDER BY `order`';
 		return DB::Prepare($sql, array(), DB::FETCH_TYPE_ALL, PDO::FETCH_CLASS, __CLASS__);
 	}
 	/**
@@ -57,6 +59,9 @@ class planHeader {
 		$plans = array_merge(plan::byLinkTypeLinkId($_type, $_id), plan::searchByConfiguration($search, 'eqLogic'));
 		foreach ($plans as $plan) {
 			$planHeader = $plan->getPlanHeader();
+			if(!is_object($planHeader)){
+				continue;
+			}
 			$return[$planHeader->getId()] = $planHeader;
 		}
 		return $return;
@@ -167,6 +172,10 @@ class planHeader {
 		return $this->name;
 	}
 	
+	public function getOrder() {
+		return $this->order;
+	}
+	
 	public function setId($_id) {
 		$this->_changed = utils::attrChanged($this->_changed,$this->id,$_id);
 		$this->id = $_id;
@@ -176,6 +185,12 @@ class planHeader {
 	public function setName($_name) {
 		$this->_changed = utils::attrChanged($this->_changed,$this->name,$_name);
 		$this->name = $_name;
+		return $this;
+	}
+	
+	public function setOrder($_order) {
+		$this->_changed = utils::attrChanged($this->_changed,$this->order,$_order);
+		$this->order = $_order;
 		return $this;
 	}
 	

@@ -34,8 +34,7 @@ if ($author == null && $name === null && $categorie === null && init('certificat
 			'author' => $author,
 			'cost' => init('cost', null),
 			'timeState' => init('timeState'),
-			'certification' => init('certification', null),
-			'limit' => 50,
+			'certification' => init('certification', null)
 		)
 	);
 }
@@ -72,22 +71,22 @@ function displayWidgetName($_name) {
 	}
 	switch ($name[2]) {
 		case 'other':
-		$result .= '<span class="label label-warning" style="text-shadow: none;">other</span> ';
+		$result .= '<span class="label label-warning">other</span> ';
 		break;
 		case 'color':
-		$result .= '<span class="label label-success" style="text-shadow: none;">color</span> ';
+		$result .= '<span class="label label-success">color</span> ';
 		break;
 		case 'slider':
-		$result .= '<span class="label label-primary" style="text-shadow: none;">slider</span> ';
+		$result .= '<span class="label label-primary">slider</span> ';
 		break;
 		case 'binary':
-		$result .= '<span class="label label-info" style="text-shadow: none;">binary</span> ';
+		$result .= '<span class="label label-info">binary</span> ';
 		break;
 		case 'numeric':
-		$result .= '<span class="label label-danger" style="text-shadow: none;">numeric</span> ';
+		$result .= '<span class="label label-danger">numeric</span> ';
 		break;
 		case 'string':
-		$result .= '<span class="label label-default" style="text-shadow: none;">string</span> ';
+		$result .= '<span class="label label-default">string</span> ';
 		break;
 		default:
 		$result .= $name[2];
@@ -149,33 +148,27 @@ function displayWidgetSubtype($_name) {
 }
 ?>
 
-<style type="text/css">
-.noPaddingLeft { padding-left: 0;}
-.noPaddingRight { padding-right: 0;}
-.noMarginBottom { margin-bottom: 0;}
-.noPaddingWell {
-	padding-bottom: 0;
-	padding-top: 0;
-}
 
-.market:hover{
-	background-color : #F2F1EF !important;
-}
-</style>
 
 <div style="margin-bottom: 5px;">
 	<form class="form-inline" role="form" onsubmit="return false;">
 		<?php if (init('type', 'plugin') == 'plugin') {?>
 			<div class="input-group input-group-sm">
 				<span class="input-group-btn">
-					<a class="btn btn-default bt_pluginFilter roundedLeft <?php echo (init('cost') == 'free') ? 'btn-primary' : '' ?>" data-href="<?php echo buildUrl('cost', 'free'); ?>">{{Gratuit}}</a><a class="btn btn-default bt_pluginFilter <?php echo (init('cost') == 'paying') ? 'btn-primary' : '' ?>" data-href="<?php echo buildUrl('cost', 'paying'); ?>">{{Payant}}</a><a class="btn btn-default bt_pluginFilter roundedRight" data-href="<?php echo buildUrl('cost', ''); ?>"><i class="fas fa-times"></i></a>
+					<a class="btn btn-default bt_pluginFilter roundedLeft <?php echo (init('cost') == 'free') ? 'btn-primary' : '' ?>" data-href="<?php echo buildUrl('cost', 'free'); ?>">{{Gratuit}}
+					</a><a class="btn btn-default bt_pluginFilter <?php echo (init('cost') == 'paying') ? 'btn-primary' : '' ?>" data-href="<?php echo buildUrl('cost', 'paying'); ?>">{{Payant}}</a><a class="btn btn-default bt_pluginFilter roundedRight" data-href="<?php echo buildUrl('cost', ''); ?>"><i class="fas fa-times"></i></a>
 				</span>
 			</div>
 		<?php }
 		?>
 		<div class="input-group input-group-sm">
 			<span class="input-group-btn">
-				<a class="btn btn-default bt_pluginFilter roundedLeft <?php echo (init('certification') == 'Officiel') ? 'btn-primary' : '' ?>" data-href="<?php echo buildUrl('certification', 'Officiel'); ?>">{{Officiel}}</a><a class="btn btn-default bt_pluginFilter <?php echo (init('certification') == 'Conseillé') ? 'btn-primary' : '' ?>" data-href="<?php echo buildUrl('certification', 'Conseillé'); ?>">{{Conseillé}}</a><a class="btn btn-default bt_pluginFilter <?php echo (init('certification') == 'Legacy') ? 'btn-primary' : '' ?>" data-href="<?php echo buildUrl('certification', 'Legacy'); ?>">{{Legacy}}</a><a class="btn btn-default bt_pluginFilter roundedRight" data-href="<?php echo buildUrl('certification', ''); ?>"><i class="fas fa-times"></i></a>
+				<a class="btn btn-default bt_pluginFilter roundedLeft <?php echo (init('certification') == 'Officiel') ? 'btn-primary' : '' ?>" data-href="<?php echo buildUrl('certification', 'Officiel'); ?>">{{Officiel}}
+				</a><a class="btn btn-default bt_pluginFilter <?php echo (init('certification') == 'Conseillé') ? 'btn-primary' : '' ?>" data-href="<?php echo buildUrl('certification', 'Conseillé'); ?>">{{Conseillé}}
+				</a><a class="btn btn-default bt_pluginFilter <?php echo (init('certification') == 'Premium') ? 'btn-primary' : '' ?>" data-href="<?php echo buildUrl('certification', 'Premium'); ?>">{{Premium}}
+				</a><a class="btn btn-default bt_pluginFilter <?php echo (init('certification') == 'Partenaire') ? 'btn-primary' : '' ?>" data-href="<?php echo buildUrl('certification', 'Partenaire'); ?>">{{Partenaire}}
+				</a><a class="btn btn-default bt_pluginFilter <?php echo (init('certification') == 'Legacy') ? 'btn-primary' : '' ?>" data-href="<?php echo buildUrl('certification', 'Legacy'); ?>">{{Legacy}}
+				</a><a class="btn btn-default bt_pluginFilter roundedRight" data-href="<?php echo buildUrl('certification', ''); ?>"><i class="fas fa-times"></i></a>
 			</span>
 		</div>
 		<div class="input-group">
@@ -187,9 +180,16 @@ function displayWidgetSubtype($_name) {
 					} else {
 						echo '<option value="">{{Top et nouveautés}}</option>';
 					}
+
 					if ($type !== null && $type != 'plugin') {
+						$categories = array();
 						foreach (repo_market::distinctCategorie($type) as $id => $category) {
-							if (trim($category) != '' && is_numeric($id)) {
+							array_push($categories, array(trim($category), $id));
+						}
+						sort($categories);
+
+						foreach ($categories as $id => $category) {
+							if ($category != '' && is_numeric($id)) {
 								echo '<option value="' . $category . '"';
 								echo (init('categorie') == $category) ? 'selected >' : '>';
 								echo $category;
@@ -198,10 +198,16 @@ function displayWidgetSubtype($_name) {
 						}
 					} else {
 						global $JEEDOM_INTERNAL_CONFIG;
+						$categories = array();
 						foreach ($JEEDOM_INTERNAL_CONFIG['plugin']['category'] as $key => $value) {
-							echo '<option value="' . $key . '"';
-							echo (init('categorie') == $key) ? 'selected >' : '>';
-							echo $value['name'];
+							array_push($categories, array($value['name'], $key));
+						}
+						sort($categories);
+
+						foreach ($categories as $cat) {
+							echo '<option value="' . $cat[1] . '"';
+							echo (init('categorie') == $cat[1]) ? 'selected >' : '>';
+							echo $cat[0];
 							echo '</option>';
 						}
 					}
@@ -240,6 +246,7 @@ if ($name !== null && strpos($name, '$') !== false) {
 	if ($default) {
 		echo '<div class="pluginContainer">';
 	}
+
 	foreach ($markets as $market) {
 		$update = update::byLogicalId($market->getLogicalId());
 		$category = $market->getCategorie();
@@ -262,13 +269,13 @@ if ($name !== null && strpos($name, '$') !== false) {
 			$first = false;
 			$nCategory++;
 		}
-		
+
 		$install = 'notInstall';
 		if (!is_object($update)) {
 			$install = 'install';
 		}
-		echo '<div class="market cursor ' . $install . '" data-market_id="' . $market->getId() . '" data-market_type="' . $market->getType() . '" style="background-color : #ffffff; height : 220px;margin-bottom : 10px;padding : 5px;border-radius: 2px;width : 160px;margin-left : 10px;" >';
-		
+		echo '<div class="market cursor ' . $install . '" data-market_id="' . $market->getId() . '" data-market_type="' . $market->getType() . '" style="height : 220px;width : 160px;margin-left : 10px;" >';
+
 		if ($market->getType() != 'widget') {
 			if ($market->getCertification() == 'Officiel') {
 				echo '<div style="position : absolute; right : 0;top:0;width:58px;height:58px;"><img src="core/img/band_Officiel.png" /></div>';
@@ -282,8 +289,14 @@ if ($name !== null && strpos($name, '$') !== false) {
 			if ($market->getCertification() == 'Obsolète') {
 				echo '<div style="position : absolute; right : 0;top:0;width:58px;height:58px;"><img src="core/img/band_Obsolete.png" /></div>';
 			}
+			if ($market->getCertification() == 'Premium') {
+				echo '<div style="position : absolute; right : 0;top:0;width:58px;height:58px;"><img src="core/img/band_Premium.png" /></div>';
+			}
+			if ($market->getCertification() == 'Partenaire') {
+				echo '<div style="position : absolute; right : 0;top:0;width:58px;height:58px;"><img src="core/img/band_Partenaire.png" /></div>';
+			}
 		}
-		
+
 		if ($market->getType() == 'widget') {
 			if (strpos($market->getName(), 'mobile.') !== false) {
 				echo '<i class="fa fa-mobile" style="position: absolute;top: 15px;left: 21px;" title="{{Widget pour la version mobile}}"></i>';
@@ -294,7 +307,7 @@ if ($name !== null && strpos($name, '$') !== false) {
 		if (is_object($update)) {
 			echo '<i class="fas fa-check" style="position : absolute; right : 5px;"></i>';
 		}
-		
+
 		echo "<br/><center>";
 		$default_image = 'core/img/no_image.gif';
 		switch ($market->getType()) {
@@ -308,20 +321,20 @@ if ($name !== null && strpos($name, '$') !== false) {
 			$default_image = 'core/img/no-image-script.png';
 			break;
 		}
-		
+
 		$urlPath = config::byKey('market::address') . '/' . $market->getImg('icon');
 		if ($market->getType() == 'widget') {
 			echo '<img class="lazy" src="' . $default_image . '" data-original="' . $urlPath . '" height="105" width="95" style="margin-left: 20px;border: 1px solid #C5C5C5;border-radius:5px; padding: 3px" />';
 		} else {
 			echo '<img class="lazy" src="' . $default_image . '" data-original="' . $urlPath . '" height="105" width="95" />';
 		}
-		
+
 		echo "</center>";
-		
+
 		echo '<span style="font-size : 1.1em;position:relative; top : 15px;word-break: break-all;white-space: pre-wrap;word-wrap: break-word;">' . $market->getName() . '</span>';
-		
+
 		echo '<span style="position : absolute;bottom : 25px;right : 12px;font-size : 0.7em;color:#999999;"><span style="font-size : 0.8em;">{{par}}</span> ' . $market->getAuthor() . '</span>';
-		
+
 		$note = $market->getRating();
 		echo '<span style="position : absolute;bottom : 5px;left : 5px;font-size : 0.7em;">';
 		for ($i = 1; $i < 6; $i++) {
@@ -336,7 +349,9 @@ if ($name !== null && strpos($name, '$') !== false) {
 			echo '<span style="position : absolute;bottom : 5px;right : 12px;color:#97bd44;">';
 			if ($market->getPurchase() == 1) {
 				echo ' <i class="fas fa-check-circle"></i>';
-			} else {
+			} else	if ($market->getCertification() == 'Premium') {
+				echo '';
+			}else{
 				if ($market->getCost() != $market->getRealCost()) {
 					echo '<span style="text-decoration:line-through;">' . number_format($market->getRealCost(), 2) . ' €</span> ';
 				}
@@ -353,56 +368,47 @@ if ($name !== null && strpos($name, '$') !== false) {
 	}
 	?>
 </div>
-<style>
-.market:hover{
-	background-color : #F2F1EF !important;
-}
-
-#md_modal{
-	background-color: #e7e7e7
-}
-</style>
 
 <script>
 $(function () {
 	$('.pluginContainer').packery();
-	
+
 	$("img.lazy").lazyload({
 		event: "sporty"
 	});
 	$("img.lazy").trigger("sporty");
 	initTableSorter();
-	
+
 	setTimeout(function () {
 		$('#table_market tbody tr.install').hide();
 	}, 500);
-	
+
 	$('.bt_pluginFilter').on('click', function () {
 		$('#md_modal').load($(this).attr('data-href'));
 	});
-	
+
 	$('#sel_categorie').on('change', function () {
 		$('#md_modal').load($(this).attr('data-href') + '&categorie=' + encodeURI($(this).value()));
 	});
-	
+
 	$('#bt_search').on('click', function () {
 		$('#md_modal').load($(this).attr('data-href') + '&name=' + encodeURI($('#in_search').value()));
 	});
-	
+
 	$('#in_search').keypress(function (e) {
 		if (e.which == 13) {
 			$('#md_modal').load($(this).attr('data-href') + '&name=' + encodeURI($('#in_search').value()));
 		}
 	});
-	
+
 	$('#bt_returnMarketList').on('click', function () {
 		$('#md_modal').load($(this).attr('data-href'));
 	});
-	
+
 	$('.marketMultiple').on('click',function(){
 		$('#md_modal').load($(this).attr('data-href') + '&name=' + encodeURI('.'+$(this).attr('data-market_name')));
 	});
-	
+
 	$('.bt_installFilter').on('click', function () {
 		$('.bt_installFilter').removeClass('btn-primary');
 		$('.pluginContainer').show();
@@ -431,7 +437,7 @@ $(function () {
 			}
 		});
 	});
-	
+
 	$('.market').on('click', function () {
 		$('#md_modal2').dialog({title: "{{Market Jeedom}}"});
 		$('#md_modal2').load('index.php?v=d&modal=update.display&type=' + $(this).attr('data-market_type') + '&id=' + $(this).attr('data-market_id')+'&repo=market').dialog('open');

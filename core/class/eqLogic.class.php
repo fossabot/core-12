@@ -454,7 +454,7 @@ class eqLogic {
 	}
 
 	public static function byString($_string) {
-		$eqLogic = self::byId(str_replace('#', '', self::fromHumanReadable($_string)));
+		$eqLogic = self::byId(str_replace(array('#','eqLogic'), '', self::fromHumanReadable($_string)));
 		if (!is_object($eqLogic)) {
 			throw new Exception(__('L\'équipement n\'a pas pu être trouvé : ', __FILE__) . $_string . __(' => ', __FILE__) . self::fromHumanReadable($_string));
 		}
@@ -545,10 +545,10 @@ class eqLogic {
 		if ($_version == 'mobile') {
 			$html .= '<div class="widget-name">' . $eqName . '<br/><span>' . $object_name . '</span></div>';
 		} else {
-			$html .= '<div class="widget-name"><a href="' . $this->getLinkToConfiguration() . '" title="'.$this->getName().'">' . $eqName . '</a><br/><span>' . $object_name . '</span></div>';
+			$html .= '<div class="widget-name"><a href="' . $this->getLinkToConfiguration() . '">' . $eqName . '</a><br/><span>' . $object_name . '</span></div>';
 		}
 		$html .= '<center class="jeedom-batterie">';
-		$html .= '<i class="icon jeedom-batterie' . $niveau . ' tooltips" title="' . $this->getStatus('battery', -2) . '%"></i>';
+		$html .= '<i class="icon jeedom-batterie' . $niveau . '"></i>';
 		$html .= '<span>' . $this->getStatus('battery', -2) . '%</span>';
 		$html .= '</center>';
 		$html .= '<center>' . __('Le', __FILE__) . ' ' . date("d/m/y G:H:s", strtotime($this->getStatus('batteryDatetime', __('inconnue', __FILE__)))) . '</center>';
@@ -579,7 +579,7 @@ class eqLogic {
 			return false;
 		}
 		$oldValue = $cmd->execCmd();
-		if (($oldValue != $cmd->formatValue($_value)) || $oldValue === '') {
+		if (($oldValue !== $cmd->formatValue($_value)) || $oldValue === '') {
 			$cmd->event($_value, $_updateTime);
 			return true;
 		}
@@ -660,7 +660,6 @@ class eqLogic {
 			'#id#' => $this->getId(),
 			'#name#' => $this->getName(),
 			'#name_display#' => (strlen($this->getName()) <25) ? $this->getName() : substr($this->getName(),0,25)."...",
-			'#hideEqLogicName#' => '',
 			'#eqLink#' => $this->getLinkToConfiguration(),
 			'#category#' => $this->getPrimaryCategory(),
 			'#translate_category#' => $translate_category,
@@ -677,13 +676,15 @@ class eqLogic {
 			'#eqType#' => $this->getEqType_name(),
 			'#custom_layout#' => ($this->widgetPossibility('custom::layout')) ? 'allowLayout' : '',
 			'#tags#' => $this->getTags(),
-			'#generic_type#' => $this->getGenericType()
+			'#generic_type#' => $this->getGenericType(),
+			'#isVerticalAlign#' => (config::byKey('interface::advance::vertCentering','core',0) == 1) ? 'verticalAlign':''
 		);
-
-		if (config::byKey('interface::advance::vertCentering','core',0) == 1) {
-			$replace['#isVerticalAlign#'] = 'verticalAlign';
+		if($replace['#height#'] == 'auto'){
+			$replace['#height#'] = '110px';
 		}
-
+		if($replace['#width#'] == 'auto'){
+			$replace['#width#'] = '230px';
+		}
 		if ($this->getAlert() != '') {
 			$alert = $this->getAlert();
 			$replace['#alert_name#'] = $alert['name'];
@@ -695,21 +696,20 @@ class eqLogic {
 			foreach ($this->getCmd('action') as $cmd) {
 				if ($cmd->getConfiguration('isRefreshCmd') == 1) {
 					$refresh_cmd = $cmd;
+					break;
 				}
 			}
 		}
 		if (is_object($refresh_cmd) && $refresh_cmd->getIsVisible() == 1) {
 			$replace['#refresh_id#'] = $refresh_cmd->getId();
 		}
-		if ($this->getDisplay('showObjectNameOn' . $_version, 0) == 1) {
-			$object = $this->getObject();
-			$replace['#object_name#'] = (is_object($object)) ? '(' . $object->getName() . ')' : '';
-		}
-		if ($this->getDisplay('showNameOn' . $_version, 1) == 0) {
-			$replace['#hideEqLogicName#'] = 'display:none;';
+		if(is_array($this->getDisplay('parameters')) && count($this->getDisplay('parameters')) > 0){
+			foreach ($this->getDisplay('parameters') as $key => $value) {
+				$replace['#'.$key.'#'] = $value;
+			}
 		}
 		$replace['#style#'] = trim($replace['#style#'], ';');
-		if (is_array($this->widgetPossibility('parameters'))) {
+		if (is_array($this->widgetPossibility('parameters')) && count($this->widgetPossibility('parameters')) > 0) {
 			foreach ($this->widgetPossibility('parameters') as $pKey => $parameter) {
 				if (!isset($parameter['allow_displayType']) || !isset($parameter['type'])) {
 					continue;
@@ -871,7 +871,6 @@ class eqLogic {
 		}
 		if($this->getChanged()){
 			if ($this->getId() != '') {
-
 				$this->emptyCacheWidget();
 				$this->setConfiguration('updatetime', date('Y-m-d H:i:s'));
 			} else {
@@ -954,18 +953,10 @@ class eqLogic {
 		$name = '';
 		$object = $this->getObject();
 		if (is_object($object)) {
-			if ($_tag) {
-				if ($object->getDisplay('tagColor') != '') {
-					$name .= '<span class="label" style="text-shadow : none;background-color:' . $object->getDisplay('tagColor') . ';color:' . $object->getDisplay('tagTextColor', 'white') . '">' . $object->getName() . '</span>';
-				} else {
-					$name .= '<span class="label label-primary" style="text-shadow : none;">' . $object->getName() . '</span>';
-				}
-			} else {
-				$name .= '[' . $object->getName() . ']';
-			}
+			$name .= $object->getHumanName($_tag,$_prettify);
 		} else {
 			if ($_tag) {
-				$name .= '<span class="label label-default" style="text-shadow : none;">' . __('Aucun', __FILE__) . '</span>';
+				$name .= '<span class="label labelObjectHuman" style="text-shadow : none;">' . __('Aucun', __FILE__) . '</span>';
 			} else {
 				$name .= '[' . __('Aucun', __FILE__) . ']';
 			}
@@ -1025,6 +1016,10 @@ class eqLogic {
 		}
 		if ($_pourcent < 0) {
 			$_pourcent = 0;
+		}
+		if($_pourcent > 90 && $_pourcent > ($this->getStatus('battery',0)*1.1)){
+			$this->setConfiguration('batterytime',date('Y-m-d H:i:s'));
+			$this->save();
 		}
 		$warning_threshold = $this->getConfiguration('battery_warning_threshold', config::byKey('battery::warning'));
 		$danger_threshold = $this->getConfiguration('battery_danger_threshold', config::byKey('battery::danger'));
@@ -1494,7 +1489,7 @@ class eqLogic {
 	}
 
 	public function setName($_name) {
-		$_name = str_replace(array('&', '#', ']', '[', '%', "'", "\\", "/"), '', $_name);
+		$_name = cleanComponanteName($_name);
 		if($_name != $this->name){
 			$this->_needRefreshWidget = true;
 			$this->_changed = true;

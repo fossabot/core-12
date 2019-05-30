@@ -14,8 +14,92 @@
 * along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
 */
 actionOptions = [];
-$('.nav-tabs.nav-primary a').on('shown.bs.tab', function (e) {
-  window.location.hash = e.target.hash;
+
+//select tab:
+_url = window.location.href
+if (_url.match('#') && _url.split('#')[1] != '' && $('.nav-tabs a[href="#' + _url.split('#')[1] + '"]').html() != undefined) {
+  $('.nav-tabs a[href="#' + _url.split('#')[1] + '"]').trigger('click')
+}
+
+//searching
+$('#in_searchConfig').keyup(function () {
+  var search = $(this).value()
+
+  //replace found els with random numbered span to place them back to right place. Avoid cloning els for better saving.
+  $('span[searchId]').each(function() {
+    el = $('#searchResult [searchId="' + $(this).attr('searchId') + '"]')
+    el.removeAttr('searchId')
+    $(this).replaceWith(el)
+  })
+
+  $('#searchResult').empty()
+  if(search == '') {
+    $('.nav-tabs.nav-primary').show()
+    $('.tab-content').show()
+    initPickers()
+    return
+  }
+  if (search.length < 3) return
+  search = search.normalize('NFD').replace(/[\u0300-\u036f]/g, "")
+
+  $('.nav-tabs.nav-primary').hide()
+  $('.tab-content').hide()
+
+  var prevTab = ''
+  $('.form-group > .control-label').each(function() {
+    var text = $(this).html().toLowerCase()
+    text = text.normalize('NFD').replace(/[\u0300-\u036f]/g, "")
+    if (text.indexOf(search.toLowerCase()) >= 0){
+
+      //get element tab to create link to:
+      var tabId = $(this).closest('div[role="tabpanel"]').attr('id')
+      tabName = $('ul.nav-primary a[href="#' + tabId + '"]').html()
+      if (tabName != undefined && prevTab != tabId) {
+        $('#searchResult').append('<a role="searchTabLink" href="#'+tabId+'">'+tabName+'</a>')
+      }
+      prevTab = tabId
+
+      el = $(this).closest('.form-group')
+      searchId = Math.random()
+      el.attr('searchId', searchId)
+      el.replaceWith('<span searchId='+ searchId + '></span>')
+      $('#searchResult').append(el)
+    }
+  })
+  initPickers()
+  initSearchLinks()
+})
+
+function initSearchLinks() {
+  $('#searchResult a[role="searchTabLink"]').on('click', function() {
+    tabId = $(this).attr('href')
+    $('#bt_resetConfigSearch').trigger('click')
+    $('ul.nav-primary > li > a[href="' + tabId + '"]').trigger('click')
+  })
+}
+
+$('#bt_resetConfigSearch').on('click', function () {
+  $('#in_searchConfig').val('')
+  $('#in_searchConfig').keyup();
+})
+
+$(function () {
+  setTimeout(function(){
+    modifyWithoutSave = false;
+  }, 1000);
+});
+
+//DateTimePickers and Spinners
+function initPickers() {
+  $('input[data-l1key="theme_start_day_hour"]').datetimepicker({datepicker:false, format:'H:i', step:10})
+  $('input[data-l1key="theme_end_day_hour"]').datetimepicker({datepicker:false, format:'H:i', step:10})
+
+  $('input[type="number"]').spinner({
+    icons: { down: "ui-icon-triangle-1-s", up: "ui-icon-triangle-1-n" }
+  });
+}
+$(function(){
+  initPickers()
 })
 
 $('#div_pageContainer').delegate('.configKey[data-l1key="market::allowDNS"],.configKey[data-l1key="network::disableMangement"]', 'change', function () {
@@ -33,16 +117,6 @@ $('#div_pageContainer').delegate('.configKey[data-l1key="market::allowDNS"],.con
     }
   }, 100);
 });
-
-//DateTimePickers and Spinners
-$(function(){
-  $('input[data-l1key="theme_start_day_hour"]').datetimepicker({datepicker:false, format:'H:i', step:10})
-  $('input[data-l1key="theme_end_day_hour"]').datetimepicker({datepicker:false, format:'H:i', step:10})
-
-  $('input[type="number"]').spinner({
-    icons: { down: "ui-icon-triangle-1-s", up: "ui-icon-triangle-1-n" }
-  });
-})
 
 $('#div_pageContainer').off('change','.enableRepository').on('change','.enableRepository', function () {
   if($(this).value() == 1){
@@ -79,7 +153,7 @@ $('#div_pageContainer').delegate('.configKey[data-l1key="log::engine"]', 'change
 $(".bt_regenerate_api").on('click', function (event) {
   $.hideAlert();
   var el = $(this);
-  bootbox.confirm('{{Etes-vous sûr de vouloir réinitialiser la clef API de }}'+el.attr('data-plugin')+' ?', function (result) {
+  bootbox.confirm('{{Êtes-vous sûr de vouloir réinitialiser la clé API de }}'+el.attr('data-plugin')+' ?', function (result) {
     if (result) {
       $.ajax({
         type: "POST",
@@ -207,6 +281,7 @@ $("#bt_saveGeneraleConfig").on('click', function (event) {
           $('#config').setValues(data, '.configKey');
           loadAactionOnMessage();
           modifyWithoutSave = false;
+          setTimeout(function(){ modifyWithoutSave = false; }, 1000);
           $('#div_alert').showAlert({message: '{{Sauvegarde réussie}}', level: 'success'});
         }
       });
@@ -274,7 +349,7 @@ function loadAactionOnMessage(){
       $('#div_alert').showAlert({message: error.message, level: 'danger'});
     },
     success: function (data) {
-      if(data == ''){
+      if(data == '' || typeof data != 'object'){
         return;
       }
       actionOptions = [];
@@ -329,7 +404,7 @@ function addActionOnMessage(_action) {
   div += '</div>';
   div += '</div>';
   $('#div_actionOnMessage').append(div);
-  $('#div_actionOnMessage .actionOnMessage:last').setValues(_action, '.expressionAttr');
+  $('#div_actionOnMessage .actionOnMessage').last().setValues(_action, '.expressionAttr');
   actionOptions.push({
     expression : init(_action.cmd, ''),
     options : _action.options,
@@ -406,7 +481,7 @@ jeedom.config.load({
   }
 });
 
-$('#div_pageContainer').delegate('.configKey', 'change', function () {
+$('#div_pageContainer').off('change','.configKey').on('change','.configKey:visible',  function () {
   modifyWithoutSave = true;
 });
 
@@ -595,10 +670,17 @@ function addConvertColor(_color, _html) {
   tr += '<td>';
   tr += '<input type="color" class="html form-control input-sm" value="' + init(_html) + '" />';
   tr += '</td>';
+  tr += '<td>';
+  tr += '<i class="fas fa-minus-circle removeConvertColor cursor"></i>';
+  tr += '</td>';
   tr += '</tr>';
   $('#table_convertColor tbody').append(tr);
   modifyWithoutSave = true;
 }
+
+$('#table_convertColor tbody').off('click','.removeConvertColor').on('click','.removeConvertColor',function(){
+  $(this).closest('tr').remove();
+});
 
 function saveConvertColor() {
   var value = {};
@@ -846,7 +928,7 @@ function addObjectSummary(_summary, _direction=1) {
   tr += '</tr>';
   $('#table_objectSummary tbody').append(tr);
   if (isset(_summary)){
-    $('#table_objectSummary tbody tr:last').setValues(_summary, '.objectSummaryAttr');
+    $('#table_objectSummary tbody tr').last().setValues(_summary, '.objectSummaryAttr');
   }
   if(isset(_summary) && isset(_summary.key) && _summary.key != ''){
     $('#table_objectSummary tbody tr:last .objectSummaryAttr[data-l1key=key]').attr('disabled','disabled');
@@ -886,3 +968,25 @@ function saveObjectSummary() {
     }
   });
 }
+
+$('#bt_cleanFileSystemRight').off('click').on('click',function(){
+  jeedom.cleanFileSystemRight({
+    error: function (error) {
+      $('#div_alert').showAlert({message: error.message, level: 'danger'});
+    },
+    success: function (data) {
+      $('#div_alert').showAlert({message: '{{Rétablissement des droits d\'accès effectué avec succès}}', level: 'success'});
+    }
+  });
+});
+
+$('#bt_consitency').off('click').on('click',function(){
+  jeedom.consistency({
+    error: function (error) {
+      $('#div_alert').showAlert({message: error.message, level: 'danger'});
+    },
+    success: function (data) {
+      $('#div_alert').showAlert({message: '{{Vérification effectuée, afficher le log consistency pour le résultat.}}', level: 'success'});
+    }
+  });
+});

@@ -222,6 +222,34 @@ class cmd {
 		return self::cast(DB::Prepare($sql, $values, DB::FETCH_TYPE_ALL, PDO::FETCH_CLASS, __CLASS__));
 	}
 	
+	public static function searchDisplay($_display, $_eqType = null) {
+		if (!is_array($_display)) {
+			$values = array(
+				'display' => '%' . $_display . '%',
+			);
+			$sql = 'SELECT ' . DB::buildField(__CLASS__) . '
+			FROM cmd
+			WHERE display LIKE :display';
+		} else {
+			$values = array(
+				'display' => '%' . $_display[0] . '%',
+			);
+			$sql = 'SELECT ' . DB::buildField(__CLASS__) . '
+			FROM cmd
+			WHERE display LIKE :display';
+			for ($i = 1; $i < count($_display); $i++) {
+				$values['display' . $i] = '%' . $_display[$i] . '%';
+				$sql .= ' OR display LIKE :display' . $i;
+			}
+		}
+		if ($_eqType !== null) {
+			$values['eqType'] = $_eqType;
+			$sql .= ' AND eqType=:eqType ';
+		}
+		$sql .= ' ORDER BY name';
+		return self::cast(DB::Prepare($sql, $values, DB::FETCH_TYPE_ALL, PDO::FETCH_CLASS, __CLASS__));
+	}
+	
 	public static function searchConfigurationEqLogic($_eqLogic_id, $_configuration, $_type = null) {
 		$values = array(
 			'configuration' => '%' . $_configuration . '%',
@@ -304,7 +332,9 @@ class cmd {
 			'value' => $_value,
 			'search' => '%#' . $_value . '#%',
 		);
-		
+		if(strpos($_value,'variable(') !== false){
+			$values['search'] = '%#' . $_value . '%';
+		}
 		if ($_onlyEnable) {
 			$sql = 'SELECT ' . DB::buildField(__CLASS__, 'c') . '
 			FROM cmd c
@@ -656,7 +686,7 @@ class cmd {
 					$return[$informations[1]][$informations[2]] = array();
 				}
 				if (isset($informations[3])) {
-					$return[$informations[1]][$informations[2]][$informations[3]] = array('name' => $informations[3], 'location' => 'customtemp', 'type' => 'custom template');
+					$return[$informations[1]][$informations[2]][$informations[3]] = array('name' => $informations[3], 'location' => 'customtemp', 'type' => 'custom');
 				}
 			}
 		}
@@ -773,19 +803,20 @@ class cmd {
 		$return['category'] = $eqLogic->getCategory();
 		
 		if ($_event['subtype'] == 'action') {
-			$return['html'] = '<div class="cmd" data-id="' . $_event['id'] . '">'
-			. '<div style="background-color:#F5A9BC;padding:1px;font-size:0.9em;font-weight: bold;cursor:help;">' . $_event['name'] . '<i class="fas fa-cogs pull-right cursor bt_configureCmd"></i></div>'
-			. '<div style="background-color:white;padding:1px;font-size:0.8em;cursor:default;">' . $_event['options'] . '<div/>'
-			. '</div>';
+			$return['html'] = '<div class="cmd" data-id="' . $_event['id'] . '">';
+			$return['html'] .= '<div>' . $_event['name'] . '<i class="fas fa-cogs pull-right cursor bt_configureCmd"></i></div>';
+			$return['html'] .= '<div>' . $_event['options'] . '<div/>';
+			$return['html'] .= '</div>';
 		} else {
-			$backgroundColor = '#A9D0F5';
+			$class = '';
 			if (isset($_event['cmdType']) && $_event['cmdType'] == 'binary') {
-				$backgroundColor = ($_event['value'] == 0 ? '#ff8693' : '#c1e5bd');
+				$class = ($_event['value'] == 0 ? 'success' : 'warning');
 			}
-			$return['html'] = '<div class="cmd" data-id="' . $_event['id'] . '">'
-			. '<div style="background-color:' . $backgroundColor . ';padding:1px;font-size:0.9em;font-weight: bold;cursor:help;">' . $_event['name'] . '<i class="fas fa-cogs pull-right cursor bt_configureCmd"></i></div>'
-			. '<div style="background-color:white;padding:1px;font-size:0.8em;cursor:default;">' . $_event['value'] . '<div/>'
-			. '</div>';
+			$return['html'] = '<div class="cmd" data-id="' . $_event['id'] . '">';
+			$return['html'] .= '<div class="' . $class . '">' . $_event['name'] . '<i class="fas fa-cogs pull-right cursor bt_configureCmd"></i>';
+			$return['html'] .= ' <span class="label-sm label-info">' . $_event['value'] . '</span>';
+			$return['html'] .= '</div>';
+			$return['html'] .= '</div>';
 		}
 		return $return;
 	}
@@ -904,6 +935,12 @@ class cmd {
 		if ($this->getDisplay('generic_type') !== '' && $this->getGeneric_type() == '') {
 			$this->setGeneric_type($this->getDisplay('generic_type'));
 			$this->setDisplay('generic_type', '');
+		}
+		if($this->getTemplate('dashboard','') == ''){
+			$this->setTemplate('dashboard','default');
+		}
+		if($this->getTemplate('mobile','') == ''){
+			$this->setTemplate('mobile','default');
 		}
 		DB::save($this);
 		if ($this->_needRefreshWidget) {
@@ -1136,8 +1173,8 @@ class cmd {
 			}else{
 				$replace = array();
 			}
+			$replace['#test#'] = '';
 			if(isset($template_conf['test']) && is_array($template_conf['test']) && count($template_conf['test']) > 0){
-				$replace['#test#'] = '';
 				foreach ($template_conf['test'] as &$test) {
 					$test['operation'] = str_replace('#value#','_options.display_value',$test['operation']);
 					$replace['#test#'] .= 'if('. $test['operation'].'){state=\''.str_replace("'","\'",$test['state']).'\'}';
@@ -1176,9 +1213,6 @@ class cmd {
 	
 	public function toHtml($_version = 'dashboard', $_options = '') {
 		$_version = jeedom::versionAlias($_version);
-		if ($this->getDisplay('showOn' . $_version, 1) == 0) {
-			return '';
-		}
 		$html = '';
 		$replace = array(
 			'#id#' => $this->getId(),
@@ -1226,7 +1260,15 @@ class cmd {
 			$replace['#name_display#'] = $this->getDisplay('icon') . ' ' . $this->getName();
 		}
 		$template = $this->getWidgetTemplateCode($_version);
-		
+		if ($_options != '') {
+			$options = jeedom::toHumanReadable($_options);
+			$options = is_json($options, $options);
+			if (is_array($options)) {
+				foreach ($options as $key => $value) {
+					$replace['#' . $key . '#'] = $value;
+				}
+			}
+		}
 		if ($this->getType() == 'info') {
 			$replace['#state#'] = '';
 			$replace['#tendance#'] = '';
@@ -1287,7 +1329,7 @@ class cmd {
 					$replace['#' . $key . '#'] = $value;
 				}
 			}
-			return template_replace($replace, $template);
+			return translate::exec(template_replace($replace, $template),'widgets/'.$_version.'/'.$this->getTemplate($_version));
 		} else {
 			$cmdValue = $this->getCmdValue();
 			if (is_object($cmdValue) && $cmdValue->getType() == 'info') {
@@ -1315,19 +1357,9 @@ class cmd {
 					$replace['#' . $key . '#'] = $value;
 				}
 			}
-			
 			$html .= template_replace($replace, $template);
 			if (trim($html) == '') {
 				return $html;
-			}
-			if ($_options != '') {
-				$options = jeedom::toHumanReadable($_options);
-				$options = is_json($options, $options);
-				if (is_array($options)) {
-					foreach ($options as $key => $value) {
-						$replace['#' . $key . '#'] = $value;
-					}
-				}
 			}
 			if (!isset($replace['#title#'])) {
 				$replace['#title#'] = '';
@@ -1351,8 +1383,7 @@ class cmd {
 			$replace['#title_possibility_list#'] = str_replace("'", "\'", $this->getDisplay('title_possibility_list', ''));
 			$replace['#slider_placeholder#'] = $this->getDisplay('slider_placeholder', __('Valeur', __FILE__));
 			$replace['#other_tooltips#'] = ($replace['#name#'] != $this->getName()) ? $this->getName() : '';
-			$html = template_replace($replace, $html);
-			return $html;
+			return translate::exec(template_replace($replace, $html),'widgets/'.$_version.'/'.$this->getTemplate($_version));
 		}
 	}
 	
@@ -1373,7 +1404,7 @@ class cmd {
 			return;
 		}
 		$oldValue = $this->execCmd();
-		$repeat = ($oldValue == $value && $oldValue !== '' && $oldValue !== null);
+		$repeat = ($oldValue === $value && $oldValue !== '' && $oldValue !== null);
 		$this->setCollectDate(($_datetime !== null) ? $_datetime : date('Y-m-d H:i:s'));
 		$this->setCache('collectDate', $this->getCollectDate());
 		$this->setValueDate(($repeat) ? $this->getValueDate() : $this->getCollectDate());
@@ -1541,8 +1572,7 @@ class cmd {
 				}
 			}
 		}
-		$level = $this->getEqLogic()->getAlert();
-		if (is_array($level) && isset($level['name']) && $currentLevel == strtolower($level['name'])) {
+		if ($this->getCache('alertLevel') == $currentLevel) {
 			return $currentLevel;
 		}
 		if ($_allowDuring && $this->getAlert($currentLevel . 'during') != '' && $this->getAlert($currentLevel . 'during') > 0) {
@@ -2026,7 +2056,7 @@ class cmd {
 	* @return $this
 	*/
 	public function setName($_name) {
-		$_name = str_replace(array('&', '#', ']', '[', '%', "'"), '', $_name);
+		$_name = cleanComponanteName($_name);
 		$this->_changed = utils::attrChanged($this->_changed,$this->name,$_name);
 		$this->name = $_name;
 		return $this;
